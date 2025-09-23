@@ -105,6 +105,19 @@ a {
   font-size: 0.75rem;
 }
 
+/* Mobile touch optimizations */
+.fc-timegrid-slot-lane {
+  touch-action: manipulation;
+}
+
+.fc-event {
+  touch-action: manipulation;
+}
+
+.fc-timegrid-col-bg {
+  touch-action: manipulation;
+}
+
 /* Mobile optimizations */
 @media (max-width: 576px) {
   .container {
@@ -140,5 +153,25 @@ a {
   
   .fc-timegrid-slot-label {
     font-size: 0.6rem;
+  }
+  
+  /* Enhanced mobile touch support */
+  .fc-timegrid-slot-lane {
+    min-height: 48px; /* Increase touch target size */
+    touch-action: manipulation;
+  }
+  
+  .fc-event {
+    min-height: 32px;
+    touch-action: manipulation;
+  }
+  
+  .fc-timegrid-col-bg {
+    touch-action: manipulation;
+  }
+  
+  /* Prevent double-tap zoom */
+  .fc {
+    touch-action: manipulation;
   }
 }

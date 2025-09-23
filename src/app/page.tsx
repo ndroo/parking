@@ -104,9 +104,25 @@ export default function Home() {
   const [showEnforcementModal, setShowEnforcementModal] = useState(false);
   const [availabilityMessage, setAvailabilityMessage] = useState("");
   const [modifyAvailabilityMessage, setModifyAvailabilityMessage] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     loadEvents();
+    
+    // Detect mobile device
+    const checkMobile = () => {
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                           ('ontouchstart' in window) || 
+                           (window.innerWidth <= 768);
+      setIsMobile(isMobileDevice);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
   }, []);
 
   const loadEvents = async () => {
@@ -164,16 +180,12 @@ export default function Home() {
     const unavailable = [];
     
     for (const spot of ["northern", "southern"]) {
-      const url = `/api/availability?spot=${spot}&start=${startIso}&end=${endIso}`;
-      console.log('Checking availability:', url);
-      const res = await fetch(url);
+      const res = await fetch(`/api/availability?spot=${spot}&start=${startIso}&end=${endIso}`);
       const json = await res.json();
-      console.log('Availability response:', spot, json);
       if (res.ok && json.available) {
         available.push(spot);
       } else {
         unavailable.push(spot);
-        console.log('Spot unavailable:', spot, 'Response:', json);
       }
     }
     
@@ -503,16 +515,12 @@ export default function Home() {
     const unavailable = [];
     
     for (const spot of ["northern", "southern"]) {
-      const url = `/api/availability?spot=${spot}&start=${checkStartTime}&end=${checkEndTime}`;
-      console.log('checkBookingAvailability - Checking availability:', url);
-      const res = await fetch(url);
+      const res = await fetch(`/api/availability?spot=${spot}&start=${checkStartTime}&end=${checkEndTime}`);
       const json = await res.json();
-      console.log('checkBookingAvailability - Availability response:', spot, json);
       if (res.ok && json.available) {
         available.push(spot);
       } else {
         unavailable.push(spot);
-        console.log('checkBookingAvailability - Spot unavailable:', spot, 'Response:', json);
       }
     }
     
@@ -602,7 +610,12 @@ export default function Home() {
                     <div>
                       <h6 className="mb-2 fw-semibold">How to Use</h6>
                       <div className="small text-muted mb-2">
-                        Click empty slots to book • Drag to reschedule • Click events to modify
+                        <ol>
+                          <li>Select a date and time to book</li>
+                          <li>Enter your details and confirm the booking</li>
+                          <li>Take note of the confirmation code so you can modify or cancel the booking</li>
+                          <li>Make payment via e-transfer to andrewjohnmcgrath@gmail.com</li>
+                        </ol>
                       </div>
                       <div className="d-flex align-items-center gap-3">
                         <div className="d-flex align-items-center">
@@ -640,10 +653,10 @@ export default function Home() {
           
           <FullCalendar
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-            initialView="timeGridWeek"
+            initialView={isMobile ? "timeGridDay" : "timeGridWeek"}
             height="auto"
-            contentHeight="500"
-            aspectRatio={1.35}
+            contentHeight={isMobile ? "400" : "500"}
+            aspectRatio={isMobile ? 1 : 1.35}
             selectable
             editable
             select={onDateSelect}
@@ -651,6 +664,13 @@ export default function Home() {
             eventDrop={onEventDrop}
             events={events}
             allDaySlot={false}
+            longPressDelay={isMobile ? 100 : 150}
+            eventLongPressDelay={isMobile ? 100 : 150}
+            selectLongPressDelay={isMobile ? 100 : 150}
+            unselectAuto={!isMobile}
+            eventInteractive={true}
+            droppable={true}
+            selectMirror={true}
             headerToolbar={{
               left: 'prev,next',
               center: 'title',
@@ -672,7 +692,7 @@ export default function Home() {
               const now = new Date();
               return selectInfo.start >= now;
             }}
-            viewDidMount={() => {
+            viewDidMount={(info) => {
               // Style past time slots after view renders
               setTimeout(() => {
                 const now = new Date();
@@ -701,6 +721,28 @@ export default function Home() {
                     }
                   }
                 });
+                
+                // Add mobile touch event optimization
+                if (isMobile) {
+                  const calendarEl = info.el;
+                  const slots = calendarEl.querySelectorAll('.fc-timegrid-slot-lane');
+                  slots.forEach(slot => {
+                    const htmlSlot = slot as HTMLElement;
+                    htmlSlot.style.touchAction = 'manipulation';
+                    htmlSlot.style.userSelect = 'none';
+                    
+                    // Add visual feedback for touch
+                    htmlSlot.addEventListener('touchstart', (e) => {
+                      htmlSlot.style.backgroundColor = 'rgba(13, 110, 253, 0.1)';
+                    }, { passive: true });
+                    
+                    htmlSlot.addEventListener('touchend', (e) => {
+                      setTimeout(() => {
+                        htmlSlot.style.backgroundColor = '';
+                      }, 150);
+                    }, { passive: true });
+                  });
+                }
               }, 200);
             }}
           />
