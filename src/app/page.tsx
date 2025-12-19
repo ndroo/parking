@@ -133,7 +133,7 @@ export default function Home() {
         ...e,
         start: new Date(e.start),
         end: new Date(e.end),
-        title: e.name ? `${e.spot.charAt(0).toUpperCase() + e.spot.slice(1)} - ${e.name}` : `${e.spot.charAt(0).toUpperCase() + e.spot.slice(1)} - Booked`,
+        title: e.name || 'Booked',
         backgroundColor: e.spot === "northern" ? "#0d6efd" : "#198754",
         borderColor: e.spot === "northern" ? "#0d6efd" : "#198754",
         textColor: "#ffffff",
@@ -141,6 +141,7 @@ export default function Home() {
         name: e.name,
         ref: e.ref,
         plate: e.plate,
+        className: `event-${e.spot}`, // Add class for positioning
         extendedProps: {
           spot: e.spot,
           name: e.name,
@@ -200,6 +201,39 @@ export default function Home() {
     setSelectedSpot(available.includes("northern") ? "northern" : available[0]);
     setAvailabilityMessage(""); // Clear old message
     setSelectedSlot({ start: adjustedStart, end: adjustedEnd });
+    setStartTime(startIso);
+    setEndTime(endIso);
+    setShowBookingModal(true);
+  };
+
+  // Handler for "New Booking" button
+  const openNewBookingModal = async () => {
+    const now = new Date();
+    const startDate = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour from now
+    const endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000); // 24 hours later
+    
+    const toLocalISOString = (date: Date) => {
+      const tzOffset = date.getTimezoneOffset() * 60000;
+      return new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
+    };
+    
+    const startIso = toLocalISOString(startDate);
+    const endIso = toLocalISOString(endDate);
+    
+    // Check availability for both spots
+    const available = [];
+    for (const spot of ["northern", "southern"]) {
+      const res = await fetch(`/api/availability?spot=${spot}&start=${startIso}&end=${endIso}`);
+      const json = await res.json();
+      if (res.ok && json.available) {
+        available.push(spot);
+      }
+    }
+    
+    setAvailableSpots(available.length > 0 ? available : ["northern", "southern"]);
+    setSelectedSpot(available.includes("northern") ? "northern" : (available[0] || "northern"));
+    setAvailabilityMessage("");
+    setSelectedSlot({ start: startDate, end: endDate });
     setStartTime(startIso);
     setEndTime(endIso);
     setShowBookingModal(true);
@@ -627,6 +661,13 @@ export default function Home() {
                           <span className="small text-muted">Southern</span>
                         </div>
                       </div>
+                      <button 
+                        className="btn btn-primary btn-sm mt-3"
+                        onClick={openNewBookingModal}
+                      >
+                        <i className="bi bi-plus-circle me-2"></i>
+                        New Booking
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -654,7 +695,10 @@ export default function Home() {
           <FullCalendar
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView={isMobile ? "timeGridDay" : "timeGridWeek"}
+            slotEventOverlap={false}
             height="auto"
+            eventMaxStack={2}
+            
             contentHeight={isMobile ? "400" : "500"}
             aspectRatio={isMobile ? 1 : 1.35}
             selectable

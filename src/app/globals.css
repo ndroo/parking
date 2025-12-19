@@ -105,6 +105,29 @@ a {
   font-size: 0.75rem;
 }
 
+/* Events take up ~45% width, leaving space to click the calendar */
+.fc-timegrid-event-harness {
+  width: 45% !important;
+  left: 2% !important;
+  right: auto !important;
+}
+
+/* Northern events on left */
+.fc-timegrid-event-harness:has(.event-northern) {
+  left: 2% !important;
+}
+
+/* Southern events on right */
+.fc-timegrid-event-harness:has(.event-southern) {
+  left: 53% !important;
+}
+
+/* Ensure events inside harness fill the space */
+.fc-timegrid-event-harness .fc-timegrid-event {
+  left: 0 !important;
+  right: 0 !important;
+}
+
 /* Mobile touch optimizations */
 .fc-timegrid-slot-lane {
   touch-action: manipulation;
