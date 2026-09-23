@@ -9,12 +9,13 @@ export interface EmailContent {
   badge?: { text: string; tone: "ok" | "accent" | "muted" };
   title: string;
   intro?: string;
-  when?: { eyebrow: string; big: string; sub: string; struck?: string };
+  when?: { eyebrow: string; big: string; sub: string; subHref?: string; struck?: string };
   refCode?: string;
   rows?: { label: string; value: string; href?: string }[];
   buttons?: EmailButton[];
   notes?: { title: string; items: string[] };
   contact?: { text: string; phone?: string; email?: string };
+  callout?: { title: string; body: string; button: EmailButton };
   footer: string;
 }
 
@@ -27,11 +28,22 @@ const FONT = `-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-s
 const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 const tel = (p: string) => p.replace(/[^\d+]/g, "");
 
-function button(b: EmailButton) {
+function fullButton(b: EmailButton) {
   const bg = b.primary ? C.accent : C.surface;
   const fg = b.primary ? "#ffffff" : C.ink;
   const border = b.primary ? C.accent : C.line;
-  return `<a href="${esc(b.href)}" style="display:inline-block;margin:0 8px 8px 0;padding:13px 20px;border-radius:12px;background:${bg};border:1px solid ${border};color:${fg};font-family:${FONT};font-size:15px;font-weight:600;text-decoration:none">${esc(b.label)}</a>`;
+  return `<a href="${esc(b.href)}" style="display:block;padding:14px 16px;border-radius:12px;background:${bg};border:1px solid ${border};color:${fg};font-family:${FONT};font-size:15px;font-weight:600;text-align:center;text-decoration:none">${esc(b.label)}</a>`;
+}
+
+// First button full width; any others share the next row equally
+function buttonBlock(buttons: EmailButton[]) {
+  const [first, ...rest] = buttons;
+  const row = rest.length
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px"><tr>${rest
+        .map((b, i) => `<td width="${Math.floor(100 / rest.length)}%" style="${i > 0 ? "padding-left:8px" : ""}">${fullButton(b)}</td>`)
+        .join("")}</tr></table>`
+    : "";
+  return `<div style="margin:4px 0 12px">${fullButton(first)}${row}</div>`;
 }
 
 export function renderEmail(e: EmailContent): { html: string; text: string } {
@@ -50,7 +62,10 @@ export function renderEmail(e: EmailContent): { html: string; text: string } {
       <div style="font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;opacity:0.85">${esc(e.when.eyebrow)}</div>
       ${e.when.struck ? `<div style="font-size:15px;opacity:0.75;text-decoration:line-through;margin-top:6px">${esc(e.when.struck)}</div>` : ""}
       <div style="font-size:28px;font-weight:700;letter-spacing:-0.02em;line-height:1.15;margin-top:4px">${esc(e.when.big)}</div>
-      <div style="font-size:15px;opacity:0.9;margin-top:6px">${esc(e.when.sub)}</div>
+      <div style="font-size:15px;margin-top:6px;color:#ffffff">${e.when.subHref
+        // An explicit white link stops Gmail auto-linking the address in blue
+        ? `<a href="${esc(e.when.subHref)}" style="color:#ffffff !important;text-decoration:none"><span style="color:#ffffff">${esc(e.when.sub)}</span></a>`
+        : `<span style="color:#ffffff">${esc(e.when.sub)}</span>`}</div>
     </td></tr></table>`);
   }
 
@@ -67,7 +82,16 @@ export function renderEmail(e: EmailContent): { html: string; text: string } {
       .join("")}</table>`);
   }
 
-  if (e.buttons?.length) parts.push(`<div style="margin:4px 0 12px">${e.buttons.map(button).join("")}</div>`);
+  if (e.buttons?.length) parts.push(buttonBlock(e.buttons));
+
+  if (e.callout) {
+    parts.push(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:14px 0 6px;border-radius:16px;background:${C.accentSoft}"><tr><td style="padding:18px 20px;font-family:${FONT}">
+      <div style="font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:${C.accent}">Before your visit</div>
+      <div style="font-size:18px;font-weight:700;color:${C.ink};margin:4px 0 6px">${esc(e.callout.title)}</div>
+      <div style="font-size:14.5px;line-height:1.55;color:${C.ink};margin:0 0 14px">${esc(e.callout.body)}</div>
+      ${fullButton({ ...e.callout.button, primary: true })}
+    </td></tr></table>`);
+  }
 
   if (e.notes?.items.length) {
     parts.push(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 6px;border-radius:14px;background:${C.soft};border:1px solid ${C.line}"><tr><td style="padding:16px 18px;font-family:${FONT}">
@@ -117,6 +141,7 @@ export function renderEmail(e: EmailContent): { html: string; text: string } {
     e.refCode && `Reference code: ${e.refCode}`,
     e.rows?.map(r => `${r.label}: ${r.value}`).join("\n"),
     e.buttons?.map(b => `${b.label}: ${b.href}`).join("\n"),
+    e.callout && `${e.callout.title}\n${e.callout.body}\n${e.callout.button.href}`,
     e.notes && `${e.notes.title}\n${e.notes.items.map(i => `- ${i}`).join("\n")}`,
     e.contact && `${e.contact.text} ${[e.contact.phone, e.contact.email].filter(Boolean).join(" / ")}`,
     e.footer,

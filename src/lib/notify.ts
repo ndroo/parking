@@ -61,7 +61,7 @@ export function buildShowingEmails(kind: ShowingEvent, b: ShowingInfo, photoUrl?
   const place = `${b.unit.label}, ${BUILDING_ADDRESS}`;
   const first = b.name.split(/\s+/)[0];
   const endIso = dt(b.startIso).plus({ minutes: b.unit.slotMinutes }).toISO()!;
-  const when = { eyebrow: longDay(b.startIso), big: range(b.startIso, endIso), sub: place };
+  const when = { eyebrow: longDay(b.startIso), big: range(b.startIso, endIso), sub: place, subHref: `https://maps.google.com/?q=${encodeURIComponent(`180 Beatrice St, Toronto, ON`)}` };
   const reminders = [
     ...(b.pet ? [`You mentioned a pet (${b.pet}). Please bring them along, we'd love to meet them.`] : []),
     ...b.unit.facts.filter(f => !(b.pet && /pet/i.test(f.title))).map(f => `${f.title}: ${f.body}`),
@@ -79,9 +79,13 @@ export function buildShowingEmails(kind: ShowingEvent, b: ShowingInfo, photoUrl?
       buttons: [
         { label: "Manage my booking", href: b.manageUrl, primary: true },
         { label: "View the listing", href: b.unit.listingUrl },
-        { label: "Read the tenant guide", href: new URL(TENANT_GUIDE.url, b.manageUrl).toString() },
       ],
-      notes: { title: "Before you visit", items: [...reminders, "Our tenant guide covers the house, what we look for in a tenant, and how to make your application an easy yes."] },
+      callout: {
+        title: "Read our tenant guide",
+        body: "A 5 minute read on the house, its renovations, what we look for in a tenant, and how to make your application an easy yes.",
+        button: { label: "Read the tenant guide", href: new URL(TENANT_GUIDE.url, b.manageUrl).toString() },
+      },
+      notes: { title: "A few reminders", items: reminders },
       contact: contactBlock(`Can't make it or running late? Please let ${SHOWING_CONTACT.name} know as early as you can so someone else can take your spot.`),
       footer: FOOTER,
     },

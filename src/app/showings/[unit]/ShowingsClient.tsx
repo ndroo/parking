@@ -599,6 +599,15 @@ export default function Showings({ unit, listing, contact }: { unit: ShowingUnit
                       &quot;Manage my booking&quot; with your reference code and email.
                     </span>
                   </div>
+                  <a className={s.guideCallout} href={TENANT_GUIDE.url}>
+                    <span className={s.guideIcon}><i className="bi bi-book"></i></span>
+                    <span className={s.guideText}>
+                      <small>Before your visit</small>
+                      <b>Read our tenant guide</b>
+                      <span>5 minutes on the house, what we look for, and how to make your application an easy yes.</span>
+                    </span>
+                    <i className={`bi bi-arrow-right ${s.guideArrow}`}></i>
+                  </a>
                   {error && <div className={s.error}>{error}</div>}
                   <div className={s.stack}>
                     <div className={s.grid2}>
