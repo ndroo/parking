@@ -163,12 +163,11 @@ export function buildInviteEmail(p: { unit: ShowingUnit; name: string; email: st
   return {
     to: p.email,
     fromName: "Andrew McGrath",
-    subject: `${p.unit.label}, 180 Beatrice: book your showing`,
+    subject: `Invitation to book your showing: ${p.unit.label}, 180 Beatrice`,
     content: {
-      preheader: `Your invite to book a showing at ${p.unit.label}, 180 Beatrice.`,
+      preheader: `You're invited to book a showing at ${p.unit.label}, 180 Beatrice.`,
       photoUrl: p.photoUrl,
-      badge: { text: "Application approved for a showing", tone: "ok" },
-      title: `Book your showing`,
+      photoAfterMessage: true,
       paragraphs: p.message.split(/\n\s*\n/).map(t => t.trim()).filter(Boolean),
       refLabel: "Your invite code",
       refCode: p.code,
@@ -194,9 +193,8 @@ export async function notifyApplication(unit: ShowingUnit, a: Application, occup
       subject: `Application received: ${unit.label}, 180 Beatrice`,
       content: {
         preheader: `Thanks ${first}, we've got your application.`,
-        badge: { text: "Application received", tone: "ok" },
-        title: `Thanks for applying, ${first}.`,
         paragraphs: [
+          `Hi ${first},`,
           `We've received your application for ${unit.label} at 180 Beatrice. We review every application personally, and if it looks like a good fit on both sides, we'll email you a personal link to book a showing.`,
           `In the meantime, feel free to have a read of our tenant guide. It covers the house, what we look for, and what's helpful to share to make your application as strong as possible.`,
         ],
@@ -256,7 +254,6 @@ export function buildDeclineEmail(p: { unit: ShowingUnit; name: string; email: s
     subject: `Your application for ${p.unit.label}, 180 Beatrice`,
     content: {
       preheader: `An update on your application for ${p.unit.label}.`,
-      title: `An update on your application`,
       paragraphs: (p.message || declineMessage(p.unit, p.name)).split(/\n\s*\n/).map(t => t.trim()).filter(Boolean),
       footer: `180 Beatrice St, Toronto`,
     },

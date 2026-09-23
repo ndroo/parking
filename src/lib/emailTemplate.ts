@@ -6,8 +6,9 @@ export interface EmailButton { label: string; href: string; primary?: boolean }
 export interface EmailContent {
   preheader: string;
   photoUrl?: string;
+  photoAfterMessage?: boolean; // letter-style: message first, then the photo
   badge?: { text: string; tone: "ok" | "accent" | "muted" };
-  title: string;
+  title?: string;
   intro?: string;
   paragraphs?: string[]; // free-form body text, e.g. a personal message
   refLabel?: string;
@@ -56,10 +57,13 @@ export function renderEmail(e: EmailContent): { html: string; text: string } {
     const [bg, fg] = badgeColors[e.badge.tone];
     parts.push(`<div style="margin:0 0 14px"><span style="display:inline-block;padding:5px 12px;border-radius:999px;background:${bg};color:${fg};font-size:13px;font-weight:600">${esc(e.badge.text)}</span></div>`);
   }
-  parts.push(`<h1 style="margin:0 0 10px;font-size:26px;line-height:1.2;letter-spacing:-0.02em;font-weight:700;color:${C.ink}">${esc(e.title)}</h1>`);
+  if (e.title) parts.push(`<h1 style="margin:0 0 10px;font-size:26px;line-height:1.2;letter-spacing:-0.02em;font-weight:700;color:${C.ink}">${esc(e.title)}</h1>`);
   if (e.intro) parts.push(`<p style="margin:0 0 20px;font-size:16px;line-height:1.55;color:${C.muted}">${esc(e.intro)}</p>`);
   if (e.paragraphs?.length) {
     parts.push(e.paragraphs.map(t => `<p style="margin:0 0 14px;font-size:15.5px;line-height:1.6;color:${C.ink}">${esc(t).replace(/\n/g, "<br>")}</p>`).join(""));
+  }
+  if (e.photoUrl && e.photoAfterMessage) {
+    parts.push(`<div style="margin:6px 0 18px;line-height:0"><img src="${esc(e.photoUrl)}" width="504" alt="" style="display:block;width:100%;max-width:504px;height:auto;border-radius:14px"></div>`);
   }
 
   if (e.when) {
@@ -121,15 +125,9 @@ export function renderEmail(e: EmailContent): { html: string; text: string } {
 <div style="display:none;max-height:0;overflow:hidden;opacity:0">${esc(e.preheader)}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.bg}"><tr><td align="center" style="padding:28px 14px">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px">
-    <tr><td style="padding:0 4px 16px;font-family:${FONT}">
-      <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-        <td style="width:30px;height:30px;border-radius:8px;background:${C.accent};color:#fff;text-align:center;font-size:15px;font-weight:700;font-family:${FONT}">&#8962;</td>
-        <td style="padding-left:10px;font-size:16px;font-weight:700;color:${C.ink};font-family:${FONT}">180 Beatrice</td>
-      </tr></table>
-    </td></tr>
     <tr><td style="background:${C.surface};border:1px solid ${C.line};border-radius:22px;overflow:hidden">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-        ${e.photoUrl ? `<tr><td style="border-radius:22px 22px 0 0;overflow:hidden;line-height:0"><img src="${esc(e.photoUrl)}" width="560" alt="" style="display:block;width:100%;max-width:560px;height:220px;object-fit:cover;border-radius:22px 22px 0 0"></td></tr>` : ""}
+        ${e.photoUrl && !e.photoAfterMessage ? `<tr><td style="border-radius:22px 22px 0 0;overflow:hidden;line-height:0"><img src="${esc(e.photoUrl)}" width="560" alt="" style="display:block;width:100%;max-width:560px;height:220px;object-fit:cover;border-radius:22px 22px 0 0"></td></tr>` : ""}
         <tr><td style="padding:26px 28px 18px;font-family:${FONT}">${parts.join("\n")}</td></tr>
         ${contact}
       </table>
