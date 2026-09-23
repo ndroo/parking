@@ -68,7 +68,7 @@ export default function InviteModal({ adminKey, target, windows, onClose, onSent
                 <input id="im-email" className="form-control mb-3" type="email" value={email} onChange={e => setEmail(e.target.value)} />
                 <label className="form-label" htmlFor="im-msg">Message</label>
                 <textarea id="im-msg" className="form-control" rows={14} value={message} onChange={e => setMessage(e.target.value)} />
-                <div className="form-text">Below your message the email adds a &quot;Pick a showing time&quot; button, their invite code{preview ? ` (${preview.code})` : ""} and a tenant guide link.</div>
+                <div className="form-text">Below your message the email adds the &quot;Pick a showing time&quot; button and link, the listing photo, the tenant guide, and their invite code{preview ? ` (${preview.code})` : ""} as a fallback.</div>
               </div>
               <div className="col-lg-7">
                 <div className="d-flex justify-content-between align-items-center mb-2">

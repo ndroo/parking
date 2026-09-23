@@ -166,18 +166,20 @@ export function buildInviteEmail(p: { unit: ShowingUnit; name: string; email: st
     subject: `Invitation to book your showing: ${p.unit.label}, 180 Beatrice`,
     content: {
       preheader: `You're invited to book a showing at ${p.unit.label}, 180 Beatrice.`,
-      photoUrl: p.photoUrl,
-      photoAfterMessage: true,
       paragraphs: p.message.split(/\n\s*\n/).map(t => t.trim()).filter(Boolean),
-      refLabel: "Your invite code",
-      refCode: p.code,
-      buttons: [{ label: "Pick a showing time", href: p.link, primary: true }, { label: "View the listing", href: p.unit.listingUrl }],
+      buttons: [{ label: "Pick a showing time", href: p.link, primary: true }],
+      rawLink: p.link,
+      listingCard: { photoUrl: p.photoUrl, title: `Want another look at ${p.unit.label} before your visit?`, button: { label: "View the listing", href: p.unit.listingUrl } },
+      codeNote: {
+        code: p.code,
+        text: `Having trouble with the link? Go to ${new URL(`/showings/${p.unit.slug}`, p.link).toString()} and enter your email with invite code`,
+      },
       callout: {
         title: "Read our tenant guide",
         body: "A 5 minute read on the house, what we look for in a tenant, and what's helpful to share with your application.",
         button: { label: "Read the tenant guide", href: new URL(TENANT_GUIDE.url, p.link).toString() },
       },
-      footer: `The button above is your personal booking link. You can also enter your invite code and email on the booking page.`,
+      footer: `180 Beatrice St, Toronto`,
     },
   };
 }

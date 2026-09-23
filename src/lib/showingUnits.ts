@@ -89,7 +89,7 @@ export const SHOWING_UNITS: ShowingUnit[] = [
     slotMinutes: 15,
     facts: [
       { icon: "bi-person", title: "One visitor at a time", body: "Each showing is a relaxed 15 minutes with just you (and anyone you'd live with)." },
-      { icon: "bi-heart", title: "Bring your pet", body: "If you have a pet, please bring them along. We like to meet pets, as it helps us understand what we might encounter if the unit ever needs maintenance while you're not home." },
+      { icon: "bi-heart", title: "Bring your pet", body: "If you have a pet, we invite you to bring them along. We love pets! Meeting them also helps us understand what we might encounter if the unit ever needs maintenance while you're not home." },
       {
         icon: "bi-tools",
         title: "Building access",

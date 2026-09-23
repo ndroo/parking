@@ -19,6 +19,9 @@ export interface EmailContent {
   notes?: { title: string; items: string[] };
   contact?: { text: string; phone?: string; email?: string };
   callout?: { title: string; body: string; button: EmailButton };
+  rawLink?: string; // shown under the buttons so people can copy it
+  listingCard?: { photoUrl?: string; title: string; button: EmailButton };
+  codeNote?: { code: string; text: string }; // small fallback at the bottom
   footer: string;
 }
 
@@ -92,6 +95,19 @@ export function renderEmail(e: EmailContent): { html: string; text: string } {
   }
 
   if (e.buttons?.length) parts.push(buttonBlock(e.buttons));
+  if (e.rawLink) {
+    parts.push(`<p style="margin:-2px 0 18px;font-size:12.5px;line-height:1.5;color:${C.muted};word-break:break-all">Or copy this link: <a href="${esc(e.rawLink)}" style="color:${C.muted}">${esc(e.rawLink)}</a></p>`);
+  }
+  if (e.listingCard) {
+    const lc = e.listingCard;
+    parts.push(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:10px 0 6px;border:1px solid ${C.line};border-radius:16px;overflow:hidden"><tr><td style="font-family:${FONT}">
+      ${lc.photoUrl ? `<a href="${esc(lc.button.href)}" style="display:block;line-height:0"><img src="${esc(lc.photoUrl)}" width="504" alt="" style="display:block;width:100%;max-width:504px;height:200px;object-fit:cover"></a>` : ""}
+      <div style="padding:14px 16px">
+        <div style="font-size:14px;font-weight:600;color:${C.ink};margin:0 0 10px">${esc(lc.title)}</div>
+        ${fullButton(lc.button)}
+      </div>
+    </td></tr></table>`);
+  }
 
   if (e.callout) {
     parts.push(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:14px 0 6px;border-radius:16px;background:${C.accentSoft}"><tr><td style="padding:18px 20px;font-family:${FONT}">
@@ -101,6 +117,10 @@ export function renderEmail(e: EmailContent): { html: string; text: string } {
       ${fullButton({ ...e.callout.button, primary: true })}
     </td></tr></table>`);
   }
+
+  const codeNote = e.codeNote
+    ? `<p style="margin:14px 0 0;padding-top:14px;border-top:1px solid ${C.line};font-size:13px;line-height:1.55;color:${C.muted}">${esc(e.codeNote.text)} <b style="font-family:'SF Mono',Menlo,Consolas,monospace;font-size:14px;letter-spacing:0.12em;color:${C.ink}">${esc(e.codeNote.code)}</b></p>`
+    : "";
 
   if (e.notes?.items.length) {
     parts.push(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 6px;border-radius:14px;background:${C.soft};border:1px solid ${C.line}"><tr><td style="padding:16px 18px;font-family:${FONT}">
@@ -128,7 +148,7 @@ export function renderEmail(e: EmailContent): { html: string; text: string } {
     <tr><td style="background:${C.surface};border:1px solid ${C.line};border-radius:22px;overflow:hidden">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
         ${e.photoUrl && !e.photoAfterMessage ? `<tr><td style="border-radius:22px 22px 0 0;overflow:hidden;line-height:0"><img src="${esc(e.photoUrl)}" width="560" alt="" style="display:block;width:100%;max-width:560px;height:220px;object-fit:cover;border-radius:22px 22px 0 0"></td></tr>` : ""}
-        <tr><td style="padding:26px 28px 18px;font-family:${FONT}">${parts.join("\n")}</td></tr>
+        <tr><td style="padding:26px 28px 18px;font-family:${FONT}">${parts.join("\n")}${codeNote}</td></tr>
         ${contact}
       </table>
     </td></tr>
@@ -145,9 +165,11 @@ export function renderEmail(e: EmailContent): { html: string; text: string } {
     e.refCode && `Reference code: ${e.refCode}`,
     e.rows?.map(r => `${r.label}: ${r.value}`).join("\n"),
     e.buttons?.map(b => `${b.label}: ${b.href}`).join("\n"),
+    e.listingCard && `${e.listingCard.title}: ${e.listingCard.button.href}`,
     e.callout && `${e.callout.title}\n${e.callout.body}\n${e.callout.button.href}`,
     e.notes && `${e.notes.title}\n${e.notes.items.map(i => `- ${i}`).join("\n")}`,
     e.contact && `${e.contact.text} ${[e.contact.phone, e.contact.email].filter(Boolean).join(" / ")}`,
+    e.codeNote && `${e.codeNote.text} ${e.codeNote.code}`,
     e.footer,
   ].filter(Boolean).join("\n\n");
 

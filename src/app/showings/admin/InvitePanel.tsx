@@ -20,7 +20,7 @@ export function defaultMessage(unit: ShowingUnit, name: string, windows: AdminWi
   return [
     `Hi ${first},`,
     `Thanks for your application for ${unit.label} at 180 Beatrice. We'd love to show you the place.`,
-    `We're doing showings on ${windowsText(unit, windows)}. Each one is about 15 minutes, one household at a time. Use the button below to pick whatever time suits you.`,
+    `We're doing showings on ${windowsText(unit, windows)}. Each one is about 15 minutes, one household at a time, and we invite you to bring your pet if you have one. We love pets! Use the button below to pick whatever time suits you.`,
     `If you have any questions, feel free to reply here, or you can text or call me at ${SHOWING_CONTACT.phone}.`,
     `Thanks,\n${SHOWING_CONTACT.name}\n${SHOWING_CONTACT.phone}`,
   ].join("\n\n");
