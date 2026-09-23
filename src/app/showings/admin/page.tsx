@@ -5,6 +5,7 @@ import { getUnitByCode } from "@/lib/showingUnits";
 import InvitePanel from "./InvitePanel";
 import WindowsPanel, { AdminWindow } from "./WindowsPanel";
 import ApplicationsPanel, { InviteTarget } from "./ApplicationsPanel";
+import InviteModal from "./InviteModal";
 
 const TZ = "America/Toronto";
 const KEY_STORAGE = "showingsAdminKey";
@@ -78,8 +79,9 @@ export default function ShowingsAdmin() {
           <a key={id} className="btn btn-sm btn-outline-secondary" href={`#${id}`}>{label}</a>
         ))}
       </nav>
-      <ApplicationsPanel adminKey={key} refreshKey={appsRefresh} bookings={bookings} onBookingsChanged={() => load(key)} onInvite={t => { setTarget({ ...t }); setTimeout(() => document.getElementById("invite")?.scrollIntoView({ behavior: "smooth" }), 50); }} />
-      <InvitePanel adminKey={key} windows={windows} target={target} onSent={() => { setAppsRefresh(n => n + 1); load(key); }} />
+      <ApplicationsPanel adminKey={key} refreshKey={appsRefresh} bookings={bookings} onBookingsChanged={() => load(key)} onInvite={t => setTarget({ ...t })} />
+      {target && <InviteModal adminKey={key} target={target} windows={windows} onClose={() => setTarget(null)} onSent={() => { setAppsRefresh(n => n + 1); load(key); }} />}
+      <InvitePanel adminKey={key} windows={windows} target={null} onSent={() => { setAppsRefresh(n => n + 1); load(key); }} />
       <div id="windows"><WindowsPanel adminKey={key} onChange={setWindows} /></div>
       <div id="bookings"></div>
       <div className="d-flex justify-content-between align-items-center mb-3">

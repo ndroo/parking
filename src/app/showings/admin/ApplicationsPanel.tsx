@@ -41,6 +41,7 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite, book
   const [open, setOpen] = useState<number | null>(null);
   const [decline, setDecline] = useState<{ app: AdminApplication; stage: "Declined" | "Not selected"; message: string; send: boolean; cancelBooking: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [declinePreview, setDeclinePreview] = useState<{ html: string; subject: string } | null>(null);
   const unit = units.find(u => u.slug === unitSlug);
   const headers = { "Content-Type": "application/json", "x-admin-key": adminKey };
 
@@ -64,6 +65,19 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite, book
     if (data.cancelled) onBookingsChanged();
     return true;
   };
+
+  // Rendered preview of the decline email, refreshed shortly after edits
+  useEffect(() => {
+    if (!decline?.send) { setDeclinePreview(null); return; }
+    const t = setTimeout(async () => {
+      const res = await fetch("/api/showings/admin/applications", {
+        method: "POST", headers,
+        body: JSON.stringify({ unit: unitSlug, name: decline.app.name, email: decline.app.email, message: decline.message, status: decline.stage, previewOnly: true }),
+      });
+      if (res.ok) setDeclinePreview(await res.json());
+    }, 400);
+    return () => clearTimeout(t);
+  }, [decline?.message, decline?.send, decline?.app.row]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!units.length) return null;
   const tabs: Tab[] = ["New", "Invited", "Selected", "Declined", "All"];
@@ -136,6 +150,9 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite, book
                           <button className="btn btn-sm btn-outline-danger" onClick={() => openDecline(a, "Not selected")}>Not moving forward</button>
                         </>
                       )}
+                      {(a.status === "Declined" || a.status === "Not selected") && (
+                        <button className="btn btn-sm btn-outline-success" onClick={() => onInvite({ unit: unitSlug, name: a.name, email: a.email, phone: a.phone, row: a.row })}>Invite to showing</button>
+                      )}
                       {a.status !== "New" && a.status !== "Invited" && (
                         <button className="btn btn-sm btn-link text-muted" title="Move back a step" onClick={() => setStatus(a, a.status === "Declined" ? "New" : "Invited")}>Undo</button>
                       )}
@@ -164,7 +181,7 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite, book
 
       {decline && (
         <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-          <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-md-down">
             <div className="modal-content">
               <div className="modal-header"><h5 className="modal-title">{decline.stage === "Declined" ? "Not a fit" : "Not moving forward"}: {decline.app.name}</h5><button className="btn-close" onClick={() => setDecline(null)}></button></div>
               <div className="modal-body">
@@ -184,7 +201,22 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite, book
                   <input id="dec-send" className="form-check-input" type="checkbox" checked={decline.send} onChange={e => setDecline({ ...decline, send: e.target.checked })} />
                   <label htmlFor="dec-send" className="form-check-label">Email them this note (from your Gmail)</label>
                 </div>
-                <textarea className="form-control" rows={10} value={decline.message} disabled={!decline.send} onChange={e => setDecline({ ...decline, message: e.target.value })} />
+                <div className="row g-3">
+                  <div className="col-lg-5">
+                    <label className="form-label" htmlFor="dec-msg">Message</label>
+                    <textarea id="dec-msg" className="form-control" rows={12} value={decline.message} disabled={!decline.send} onChange={e => setDecline({ ...decline, message: e.target.value })} />
+                  </div>
+                  <div className="col-lg-7">
+                    <span className="form-label d-block">Preview{declinePreview ? `: ${declinePreview.subject}` : ""}</span>
+                    {!decline.send ? (
+                      <div className="text-muted small">No email will be sent.</div>
+                    ) : declinePreview ? (
+                      <iframe title="Decline preview" srcDoc={declinePreview.html} style={{ width: "100%", height: 420, border: "1px solid var(--bs-border-color)", borderRadius: 12, background: "#f5f1ea" }} />
+                    ) : (
+                      <div className="text-muted small">Loading preview...</div>
+                    )}
+                  </div>
+                </div>
               </div>
               <div className="modal-footer">
                 <button className="btn btn-secondary" onClick={() => setDecline(null)}>Keep as is</button>

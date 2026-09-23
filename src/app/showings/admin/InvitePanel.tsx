@@ -7,7 +7,7 @@ import type { InviteTarget } from "./ApplicationsPanel";
 
 const bookable = SHOWING_UNITS.filter(u => u.bookable);
 
-function windowsText(unit: ShowingUnit, windows: AdminWindow[]) {
+export function windowsText(unit: ShowingUnit, windows: AdminWindow[]) {
   const t = (iso: string) => DateTime.fromISO(iso).setZone("America/Toronto").toFormat("h:mma").replace(":00", "").toLowerCase();
   const parts = windows
     .filter(w => w.unit === unit.code && DateTime.fromISO(w.endIso) > DateTime.now())
@@ -15,7 +15,7 @@ function windowsText(unit: ShowingUnit, windows: AdminWindow[]) {
   return parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}` : parts[0] || "(no showing windows set yet)";
 }
 
-function defaultMessage(unit: ShowingUnit, name: string, windows: AdminWindow[]) {
+export function defaultMessage(unit: ShowingUnit, name: string, windows: AdminWindow[]) {
   const first = name.trim().split(/\s+/)[0] || "there";
   return [
     `Hi ${first},`,
@@ -83,8 +83,8 @@ export default function InvitePanel({ adminKey, windows, target, onSent }: { adm
   return (
     <div className="card mb-4" id="invite">
       <div className="card-body">
-        <h2 className="h5 mb-1">Invite an applicant{row ? <span className="badge text-bg-success ms-2 align-middle">From application</span> : null}</h2>
-        <p className="text-muted small mb-3">Only people with an invite can book. This sends them a personal booking link and code from your Gmail.</p>
+        <h2 className="h5 mb-1">Invite someone directly</h2>
+        <p className="text-muted small mb-3">For people who didn&apos;t apply through the site. To invite an applicant, use &quot;Invite to showing&quot; on their application above. This sends a personal booking link and code from your Gmail.</p>
         <div className="row g-2">
           <div className="col-md-3">
             <label className="form-label" htmlFor="inv-unit">Unit</label>
@@ -115,7 +115,7 @@ export default function InvitePanel({ adminKey, windows, target, onSent }: { adm
         </div>
         <div className="d-flex gap-2 mt-3 flex-wrap">
           <button className="btn btn-secondary" disabled={busy || !f.name || !f.email} onClick={() => call(false)}>Preview</button>
-          <button className="btn btn-primary" disabled={busy || !f.name || !f.email || !preview} onClick={() => { if (confirm(`Send this invite to ${f.email}?`)) call(true); }}>
+          <button className="btn btn-primary" disabled={busy || !f.name || !f.email} onClick={() => { if (confirm(`Send this invite to ${f.email}?`)) call(true); }}>
             {busy ? "Working..." : "Send invite"}
           </button>
           {status && <span className="align-self-center small">{status}</span>}

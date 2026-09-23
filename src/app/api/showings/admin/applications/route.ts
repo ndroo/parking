@@ -4,6 +4,7 @@ import { getUnit } from "@/lib/showingUnits";
 import { APPLICATION_STATUSES, ApplicationStatus, listApplications, setApplicationStatus } from "@/lib/applicationsSheet";
 import { getListing } from "@/lib/listingai";
 import { buildDeclineEmail, send } from "@/lib/notify";
+import { renderEmail } from "@/lib/emailTemplate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,9 +29,14 @@ export async function GET(req: NextRequest) {
 // POST { unit, row, email, status, sendDecline?, message? }
 export async function POST(req: NextRequest) {
   if (!isAdmin(req.headers.get("x-admin-key"))) return json({ error: "Unauthorized" }, 401);
-  const { unit: slug, row, email, name, status, sendDecline, message, cancelBooking } = await req.json();
+  const { unit: slug, row, email, name, status, sendDecline, message, cancelBooking, previewOnly } = await req.json();
   const unit = getUnit(slug);
   if (!unit?.applicationSheet) return json({ error: "No application sheet for this unit" }, 400);
+  // Render the decline email without sending or changing anything
+  if (previewOnly) {
+    const mail = buildDeclineEmail({ unit, name, email, message });
+    return json({ html: renderEmail(mail.content).html, subject: mail.subject });
+  }
   if (!APPLICATION_STATUSES.includes(status as ApplicationStatus)) return json({ error: "Bad status" }, 400);
   const declining = status === "Declined" || status === "Not selected";
   try {
