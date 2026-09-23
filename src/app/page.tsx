@@ -134,8 +134,8 @@ export default function Home() {
         start: new Date(e.start),
         end: new Date(e.end),
         title: e.name || 'Booked',
-        backgroundColor: e.spot === "northern" ? "#0d6efd" : "#198754",
-        borderColor: e.spot === "northern" ? "#0d6efd" : "#198754",
+        backgroundColor: e.spot === "northern" ? "#b24a26" : "#2f7a4f",
+        borderColor: e.spot === "northern" ? "#b24a26" : "#2f7a4f",
         textColor: "#ffffff",
         spot: e.spot,
         name: e.name,
@@ -611,23 +611,25 @@ export default function Home() {
   const price = startTime && endTime ? calculateBestPrice(startTime, endTime).totalCents : 0;
 
   return (
-    <div className="container py-4">
+    <div className="parking-theme">
+    <div className="pk-container py-4">
       <div className="row">
         <div className="col-12">
-          <div className="d-flex flex-column flex-md-row justify-content-between align-items-center align-items-md-center mb-4 gap-3">
-            <div className="text-center text-md-start">
-              <h1 className="mb-1 h2">{SITE_CONFIG.address}</h1>
-              <p className="text-muted mb-0">{SITE_CONFIG.description}</p>
+          <div className="pk-hero">
+            <div>
+              <span className="pk-eyebrow"><i className="bi bi-p-circle"></i> {SITE_CONFIG.address}</span>
+              <h1 className="pk-title">Book a parking spot.</h1>
+              <p className="pk-lede">Two private spots, Northern and Southern. Pick a time on the calendar, pay by e-transfer.</p>
             </div>
-            <div className="text-center p-3 bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded">
-              <div className="small text-warning-emphasis mb-2 fw-medium">Someone in your spot?</div>
-              <button 
-                type="button" 
-                className="btn btn-warning btn-sm"
+            <div className="pk-report">
+              <div className="pk-report-label">Someone in your spot?</div>
+              <button
+                type="button"
+                className="btn btn-outline-danger"
                 onClick={() => setShowEnforcementModal(true)}
               >
                 <i className="bi bi-headset me-1"></i>
-                Report Issue
+                Report issue
               </button>
             </div>
           </div>
@@ -653,11 +655,11 @@ export default function Home() {
                       </div>
                       <div className="d-flex align-items-center gap-3">
                         <div className="d-flex align-items-center">
-                          <div className="rounded-circle me-2" style={{width: '8px', height: '8px', backgroundColor: '#0d6efd'}}></div>
+                          <div className="rounded-circle me-2" style={{width: '8px', height: '8px', backgroundColor: '#b24a26'}}></div>
                           <span className="small text-muted">Northern</span>
                         </div>
                         <div className="d-flex align-items-center">
-                          <div className="rounded-circle me-2" style={{width: '8px', height: '8px', backgroundColor: '#198754'}}></div>
+                          <div className="rounded-circle me-2" style={{width: '8px', height: '8px', backgroundColor: '#2f7a4f'}}></div>
                           <span className="small text-muted">Southern</span>
                         </div>
                       </div>
@@ -757,7 +759,7 @@ export default function Home() {
                       const dayColumns = document.querySelectorAll('.fc-day-today .fc-timegrid-slot-lane');
                       if (Array.from(dayColumns).includes(slot) && hour < currentHour) {
                         const htmlSlot = slot as HTMLElement;
-                        htmlSlot.style.backgroundColor = '#f8f9fa';
+                        htmlSlot.style.backgroundColor = '#f5f1ea';
                         htmlSlot.style.opacity = '0.5';
                         htmlSlot.style.position = 'relative';
                         htmlSlot.style.pointerEvents = 'none';
@@ -777,7 +779,7 @@ export default function Home() {
                     
                     // Add visual feedback for touch
                     htmlSlot.addEventListener('touchstart', (e) => {
-                      htmlSlot.style.backgroundColor = 'rgba(13, 110, 253, 0.1)';
+                      htmlSlot.style.backgroundColor = 'rgba(178, 74, 38, 0.1)';
                     }, { passive: true });
                     
                     htmlSlot.addEventListener('touchend', (e) => {
@@ -1593,6 +1595,6 @@ export default function Home() {
         </div>
       )}
     </div>
+    </div>
   );
 }
-

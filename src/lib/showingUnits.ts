@@ -13,26 +13,55 @@ export interface ShowingUnit {
   label: string;
   blurb: string;
   listingUrl: string;
+  listingId: string; // ListingAI listing slug; details and photos are pulled live from it
+  bookable: boolean; // false shows the unit and listing but no bookable times (e.g. currently rented)
   slotMinutes: number;
   windows: ShowingWindow[];
   facts: { icon: string; title: string; body: string }[];
 }
 
+// Fallback contact; the listing's ListingAI branding takes priority when available
 export const SHOWING_CONTACT = {
   name: "Andrew",
   email: "andrewjohnmcgrath@gmail.com",
-  phone: "", // e.g. "416-555-0123"; shows Call/Text buttons when set
+  phone: "647-225-4909",
 };
 
 export const BUILDING_ADDRESS = "180 Beatrice St, Toronto";
 
 export const SHOWING_UNITS: ShowingUnit[] = [
   {
+    slug: "unit-1",
+    code: "1",
+    label: "Unit 1",
+    blurb: "Three-bedroom home with rooftop patio",
+    listingUrl: "https://little-italy-rentals.mylistingai.co/listing/180-beatrice-st-toronto-on-m6g-3g1-canada-167071",
+    listingId: "180-beatrice-st-toronto-on-m6g-3g1-canada-167071",
+    bookable: false,
+    slotMinutes: 15,
+    windows: [],
+    facts: [],
+  },
+  {
+    slug: "unit-2",
+    code: "2",
+    label: "Unit 2",
+    blurb: "Two-bedroom main floor apartment",
+    listingUrl: "https://little-italy-rentals.mylistingai.co/listing/180-beatrice-st-toronto-on-m6g-3g1-canada-167072",
+    listingId: "180-beatrice-st-toronto-on-m6g-3g1-canada-167072",
+    bookable: false,
+    slotMinutes: 15,
+    windows: [],
+    facts: [],
+  },
+  {
     slug: "unit-3",
     code: "3",
     label: "Unit 3",
     blurb: "Lower-level apartment in Little Italy",
     listingUrl: "https://little-italy-rentals.mylistingai.co/listing/180-beatrice-st-toronto-on-m6g-3g1-canada-167074",
+    listingId: "180-beatrice-st-toronto-on-m6g-3g1-canada-167074",
+    bookable: true,
     slotMinutes: 15,
     windows: [
       { date: "2026-10-02", start: "18:00", end: "20:00" },

@@ -38,10 +38,13 @@ All times are in America/Toronto.
 
 ### Showings
 
-- `/showings`: lists every unit with upcoming showings.
+- `/showings`: lists every unit (bookable ones first; rented ones shown with their ListingAI status).
 - `/showings/<unit>` (e.g. `/showings/unit-3`): booking page for one unit. Units, windows, listing links and the "good to know" cards live in `src/lib/showingUnits.ts`.
 - Visitors see only which times are open, never who booked them. One booking per email per unit.
 - After booking, visitors get a ticket with a reference code. It is remembered in their browser (localStorage) so they can come back to move or cancel; on another device they use "Manage my booking" with reference + email.
 - `/showings/admin?key=...`: every unit's bookings with full details and cancel.
+- Listing details (photos, price, beds/baths, highlights, contact phone/email) are pulled live from the ListingAI public API (`src/lib/listingai.ts`, cached 5 minutes), so edits on ListingAI show up automatically.
+- Set `bookable: false` on a unit to show it without bookable times (e.g. while it's rented).
+- Shared site header (`src/components/SiteHeader.tsx`) and the parking page theme (`src/app/parking-theme.css`) keep parking and showings visually consistent at one content width (960px).
 - Env: `CALENDAR_ID_SHOWINGS` (one calendar for all units, shared with the service account), `SHOWINGS_ADMIN_KEY`.
 - Double-booking is prevented by giving each unit + slot a deterministic event id (`u<code>d<yyyymmdd>t<hhmm>`); a second insert returns 409.

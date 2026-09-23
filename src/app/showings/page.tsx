@@ -1,49 +1,55 @@
 import { DateTime } from "luxon";
 import s from "./showings.module.css";
-import { BUILDING_ADDRESS, SHOWING_CONTACT, SHOWING_UNITS } from "@/lib/showingUnits";
+import { BUILDING_ADDRESS, SHOWING_UNITS } from "@/lib/showingUnits";
+import { getListing } from "@/lib/listingai";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Showings - 180 Beatrice" };
-
-export default function ShowingsIndex() {
+export default async function ShowingsIndex() {
   const now = DateTime.now().setZone("America/Toronto");
-  const open = SHOWING_UNITS.filter(u =>
-    u.windows.some(w => DateTime.fromISO(`${w.date}T${w.end}`, { zone: "America/Toronto" }) > now)
-  );
+  const listings = await Promise.all(SHOWING_UNITS.map(u => getListing(u.listingId)));
+  const units = SHOWING_UNITS.map((u, i) => ({
+    unit: u,
+    listing: listings[i],
+    open: u.bookable && u.windows.some(w => DateTime.fromISO(`${w.date}T${w.end}`, { zone: "America/Toronto" }) > now),
+  })).sort((a, b) => Number(b.open) - Number(a.open));
 
   return (
     <div className={s.page}>
       <div className={s.wrap}>
-        <header className={s.topbar}>
-          <span className={s.brand}>180 Beatrice</span>
-        </header>
         <section className={s.hero}>
-          <span className={s.eyebrow}><i className="bi bi-house-door"></i> {BUILDING_ADDRESS}</span>
-          <h1 className={s.title}>Book a showing.</h1>
-          <p className={s.lede}>Pick the apartment you&apos;re interested in to see open times.</p>
+          <span className={s.eyebrow}><i className="bi bi-geo-alt"></i> {BUILDING_ADDRESS} · Little Italy</span>
+          <h1 className={s.title}>Units &amp; showings.</h1>
+          <p className={s.lede}>See what&apos;s available at 180 Beatrice and book a private showing.</p>
         </section>
 
-        {open.length === 0 && (
-          <div className={s.section}>
-            <h2 className={s.h2}>No showings scheduled right now</h2>
-            <p className={s.sub}>
-              Questions? Email <a className={s.linkBtn} href={`mailto:${SHOWING_CONTACT.email}`}>{SHOWING_CONTACT.email}</a>
-            </p>
-          </div>
-        )}
-
         <div className={s.stack}>
-          {open.map(u => (
-            <a key={u.slug} href={`/showings/${u.slug}`} className={`${s.section} ${s.unitCard}`}>
-              <div>
-                <h2 className={s.h2}>{u.label}</h2>
-                <p className={s.sub}>{u.blurb}</p>
+          {units.map(({ unit: u, listing: l, open }) => (
+            <a key={u.slug} href={`/showings/${u.slug}`} className={`${s.section} ${s.unitCard} ${open ? "" : s.unitCardClosed}`}>
+              {l?.photos[0] && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img className={s.unitThumb} src={l.photos[0].url} alt="" />
+              )}
+              <div style={{ flex: "1 1 200px", minWidth: 0 }}>
+                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                  <h2 className={s.h2}>{u.label}</h2>
+                  <span className={`${s.badge} ${open ? s.badgeOpen : s.badgeClosed}`}>
+                    <i className={`bi ${open ? "bi-calendar-check" : "bi-lock"}`}></i>
+                    {open ? "Booking showings" : l?.status || "Currently rented"}
+                  </span>
+                </div>
                 <p className={s.sub}>
-                  {u.windows.map(w => DateTime.fromISO(w.date).toFormat("ccc LLL d")).join(" · ")}
+                  {[l?.price && `${l.price}/mo`, l?.beds, l?.baths].filter(Boolean).join(" · ") || u.blurb}
+                </p>
+                <p className={s.sub}>
+                  {open
+                    ? u.windows.map(w => DateTime.fromISO(w.date).toFormat("ccc LLL d")).join(" · ")
+                    : l?.headline || u.blurb}
                 </p>
               </div>
-              <span className={`${s.btn} ${s.btnPrimary}`}>See times <i className="bi bi-arrow-right"></i></span>
+              <span className={`${s.btn} ${open ? s.btnPrimary : ""}`}>
+                {open ? "Book a showing" : "View unit"} <i className="bi bi-arrow-right"></i>
+              </span>
             </a>
           ))}
         </div>

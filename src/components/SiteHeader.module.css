@@ -1,0 +1,98 @@
+.bar {
+  --h-bg: #f5f1ea;
+  --h-ink: #1d1a16;
+  --h-muted: #6d665c;
+  --h-line: #e6dfd4;
+  --h-accent: #b24a26;
+  --h-accent-soft: #f7e4da;
+
+  background: var(--h-bg);
+  border-bottom: 1px solid var(--h-line);
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+}
+
+/* Showings pages support dark mode; the parking page is light only */
+@media (prefers-color-scheme: dark) {
+  .darkOk {
+    --h-ink: #f1ece4;
+    --h-muted: #a39b8f;
+    --h-accent: #e3825a;
+    --h-accent-soft: #3a241a;
+    --h-bg: #12110f;
+    --h-line: #34302a;
+  }
+}
+
+.narrow {
+  max-width: 992px; /* 960 content + 16px gutters; shared by parking and showings */
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.inner {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  color: var(--h-ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.brand:hover { color: var(--h-ink); }
+
+.mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  background: var(--h-accent);
+  color: #fff;
+  font-size: 15px;
+}
+
+.nav {
+  display: flex;
+  gap: 4px;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--h-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.link:hover { color: var(--h-ink); background: var(--h-accent-soft); }
+
+.active {
+  color: var(--h-accent);
+  background: var(--h-accent-soft);
+}
+
+.active:hover { color: var(--h-accent); }
+
+@media (max-width: 460px) {
+  .brand { font-size: 15px; }
+  .link { padding: 0 10px; font-size: 13px; }
+  .link i { display: none; }
+}

@@ -1,0 +1,259 @@
+/* Parking page theme: re-skins Bootstrap + FullCalendar to match the showings
+   pages. Scoped to .parking-theme so nothing else changes. Light only for now:
+   the page uses light-only Bootstrap utilities (bg-light, text-dark). */
+
+.parking-theme {
+  --p-bg: #f5f1ea;
+  --p-surface: #ffffff;
+  --p-surface-2: #faf7f2;
+  --p-ink: #1d1a16;
+  --p-muted: #6d665c;
+  --p-line: #e6dfd4;
+  --p-accent: #b24a26;
+  --p-accent-hover: #9c3f1f;
+  --p-accent-soft: #f7e4da;
+  --p-ok: #2f7a4f;
+  --p-ok-hover: #276843;
+  --p-shadow: 0 1px 2px rgba(40, 30, 20, 0.05), 0 8px 28px rgba(40, 30, 20, 0.07);
+
+  --bs-body-bg: var(--p-surface);
+  --bs-body-color: var(--p-ink);
+  --bs-emphasis-color: var(--p-ink);
+  --bs-secondary-color: var(--p-muted);
+  --bs-border-color: var(--p-line);
+  --bs-primary: var(--p-accent);
+  --bs-primary-rgb: 178, 74, 38;
+  --bs-success: var(--p-ok);
+  --bs-success-rgb: 47, 122, 79;
+  --bs-light-rgb: 250, 247, 242;
+  --bs-border-radius: 12px;
+  --bs-border-radius-sm: 10px;
+  --bs-border-radius-lg: 18px;
+  --bs-link-color-rgb: 178, 74, 38;
+  --bs-focus-ring-color: rgba(178, 74, 38, 0.2);
+
+  color-scheme: light;
+  min-height: calc(100vh - 65px);
+  background: var(--p-bg);
+  color: var(--p-ink);
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  padding-bottom: 60px;
+}
+
+.parking-theme .text-muted { color: var(--p-muted) !important; }
+
+/* Same content width as the site header and showings pages */
+.pk-container {
+  max-width: 992px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.pk-container > .row { --bs-gutter-x: 0; }
+
+/* Hero */
+.pk-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 20px 0 28px;
+}
+
+.pk-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--p-accent);
+  background: var(--p-accent-soft);
+  padding: 6px 12px;
+  border-radius: 999px;
+  margin-bottom: 16px;
+}
+
+.pk-title {
+  font-size: clamp(32px, 6vw, 48px);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+
+.pk-lede {
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--p-muted);
+  max-width: 560px;
+  margin: 0;
+}
+
+.pk-report {
+  background: var(--p-surface);
+  border: 1px solid var(--p-line);
+  border-radius: 18px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.pk-report-label { font-size: 14px; font-weight: 600; color: var(--p-muted); }
+
+/* Cards and modals */
+.parking-theme .card {
+  border: 1px solid var(--p-line) !important;
+  border-radius: 24px;
+  box-shadow: var(--p-shadow) !important;
+  overflow: hidden;
+}
+
+.parking-theme .card .card { border-radius: 16px; box-shadow: none !important; }
+.parking-theme .card-header { background: var(--p-surface-2) !important; border-bottom-color: var(--p-line); }
+.parking-theme .bg-light { background-color: var(--p-surface-2) !important; }
+
+.parking-theme .modal { backdrop-filter: blur(3px); }
+.parking-theme .modal-content { border: 1px solid var(--p-line); border-radius: 24px; box-shadow: 0 20px 60px rgba(40, 30, 20, 0.25); }
+.parking-theme .modal-header, .parking-theme .modal-footer { border-color: var(--p-line); padding: 18px 22px; }
+.parking-theme .modal-body { padding: 20px 22px; }
+.parking-theme .modal-title { font-weight: 700; letter-spacing: -0.02em; }
+
+@media (max-width: 575.98px) {
+  .parking-theme .modal-fullscreen-sm-down .modal-content { border-radius: 0; }
+}
+
+/* Buttons */
+.parking-theme .btn {
+  --bs-btn-font-weight: 600;
+  --bs-btn-border-radius: 12px;
+  --bs-btn-padding-y: 0.55rem;
+  --bs-btn-padding-x: 1rem;
+  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.parking-theme .btn:active { transform: scale(0.98); }
+.parking-theme .btn-sm { --bs-btn-padding-y: 0.4rem; --bs-btn-padding-x: 0.8rem; --bs-btn-border-radius: 10px; }
+
+.parking-theme .btn-primary {
+  --bs-btn-bg: var(--p-accent);
+  --bs-btn-border-color: var(--p-accent);
+  --bs-btn-hover-bg: var(--p-accent-hover);
+  --bs-btn-hover-border-color: var(--p-accent-hover);
+  --bs-btn-active-bg: var(--p-accent-hover);
+  --bs-btn-active-border-color: var(--p-accent-hover);
+  --bs-btn-disabled-bg: var(--p-accent);
+  --bs-btn-disabled-border-color: var(--p-accent);
+  --bs-btn-focus-shadow-rgb: 178, 74, 38;
+}
+
+.parking-theme .btn-outline-primary {
+  --bs-btn-color: var(--p-accent);
+  --bs-btn-border-color: var(--p-accent);
+  --bs-btn-hover-bg: var(--p-accent);
+  --bs-btn-hover-border-color: var(--p-accent);
+  --bs-btn-active-bg: var(--p-accent);
+  --bs-btn-active-border-color: var(--p-accent);
+  --bs-btn-focus-shadow-rgb: 178, 74, 38;
+}
+
+.parking-theme .btn-success {
+  --bs-btn-bg: var(--p-ok);
+  --bs-btn-border-color: var(--p-ok);
+  --bs-btn-hover-bg: var(--p-ok-hover);
+  --bs-btn-hover-border-color: var(--p-ok-hover);
+  --bs-btn-active-bg: var(--p-ok-hover);
+  --bs-btn-active-border-color: var(--p-ok-hover);
+}
+
+.parking-theme .btn-outline-success {
+  --bs-btn-color: var(--p-ok);
+  --bs-btn-border-color: var(--p-ok);
+  --bs-btn-hover-bg: var(--p-ok);
+  --bs-btn-hover-border-color: var(--p-ok);
+  --bs-btn-active-bg: var(--p-ok);
+  --bs-btn-active-border-color: var(--p-ok);
+}
+
+.parking-theme .btn-secondary {
+  --bs-btn-color: var(--p-ink);
+  --bs-btn-bg: var(--p-surface);
+  --bs-btn-border-color: var(--p-line);
+  --bs-btn-hover-color: var(--p-ink);
+  --bs-btn-hover-bg: var(--p-surface-2);
+  --bs-btn-hover-border-color: var(--p-muted);
+  --bs-btn-active-color: var(--p-ink);
+  --bs-btn-active-bg: var(--p-surface-2);
+  --bs-btn-active-border-color: var(--p-muted);
+}
+
+/* Forms */
+.parking-theme .form-control,
+.parking-theme .form-select {
+  border: 1.5px solid var(--p-line);
+  border-radius: 12px;
+  background-color: var(--p-surface-2);
+  min-height: 46px;
+}
+
+.parking-theme .form-control:focus,
+.parking-theme .form-select:focus {
+  border-color: var(--p-accent);
+  background-color: var(--p-surface);
+  box-shadow: 0 0 0 4px var(--p-accent-soft);
+}
+
+.parking-theme .form-label { font-size: 13px; font-weight: 600; color: var(--p-muted); }
+
+.parking-theme .badge.text-bg-light {
+  background: var(--p-surface-2) !important;
+  border-color: var(--p-line) !important;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-weight: 600;
+}
+
+/* FullCalendar */
+.parking-theme .fc {
+  --fc-border-color: var(--p-line);
+  --fc-page-bg-color: var(--p-surface);
+  --fc-neutral-bg-color: var(--p-surface-2);
+  --fc-today-bg-color: rgba(178, 74, 38, 0.06);
+  --fc-now-indicator-color: var(--p-accent);
+  --fc-button-text-color: var(--p-ink);
+  --fc-button-bg-color: var(--p-surface);
+  --fc-button-border-color: var(--p-line);
+  --fc-button-hover-bg-color: var(--p-surface-2);
+  --fc-button-hover-border-color: var(--p-muted);
+  --fc-button-active-bg-color: var(--p-accent-soft);
+  --fc-button-active-border-color: var(--p-accent);
+
+  background: var(--p-surface);
+  border: 1px solid var(--p-line);
+  border-radius: 24px;
+  box-shadow: var(--p-shadow);
+  padding: 18px;
+}
+
+@media (max-width: 575.98px) {
+  .parking-theme .fc { padding: 12px 8px; border-radius: 20px; }
+}
+
+.parking-theme .fc .fc-toolbar-title { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+.parking-theme .fc .fc-button { font-weight: 600; border-radius: 10px; text-transform: none; box-shadow: none !important; }
+.parking-theme .fc .fc-button-primary:not(:disabled).fc-button-active { color: var(--p-accent); }
+.parking-theme .fc .fc-button-group > .fc-button { border-radius: 0; }
+.parking-theme .fc .fc-button-group > .fc-button:first-child { border-top-left-radius: 10px; border-bottom-left-radius: 10px; }
+.parking-theme .fc .fc-button-group > .fc-button:last-child { border-top-right-radius: 10px; border-bottom-right-radius: 10px; }
+.parking-theme .fc .fc-col-header-cell-cushion { font-weight: 650; color: var(--p-ink); padding: 8px 4px; }
+.parking-theme .fc .fc-timegrid-slot-label-cushion { color: var(--p-muted); font-size: 12px; }
+.parking-theme .fc .fc-scrollgrid { border-radius: 14px; overflow: hidden; }
+.parking-theme .fc .fc-event { border-radius: 8px; padding: 2px 4px; font-weight: 600; }
+.parking-theme .fc a { color: inherit; }
+.parking-theme .fc .fc-col-header-cell-cushion { text-decoration: none; }
+
+@media (max-width: 575.98px) {
+  .parking-theme .fc .fc-col-header-cell-cushion { font-size: 11.5px; padding: 6px 1px; }
+  .parking-theme .fc .fc-toolbar-title { font-size: 17px; }
+}

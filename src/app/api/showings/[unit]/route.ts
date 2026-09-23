@@ -34,6 +34,7 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
 export async function POST(req: NextRequest, { params }: Ctx) {
   const unit = getUnit((await params).unit);
   if (!unit) return json({ error: "Unknown unit" }, 404);
+  if (!unit.bookable) return json({ error: `${unit.label} isn't taking showings right now` }, 403);
   try {
     const { startIso, name, email, phone, pet } = await req.json();
     const cleanName = String(name || "").trim().slice(0, 100);
