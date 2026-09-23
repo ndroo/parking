@@ -6,18 +6,26 @@ import { SHOWING_UNITS } from "@/lib/showingUnits";
 export interface AdminApplication {
   row: number; submittedAt: string; name: string; email: string; phone: string; occupants: string; moveIn: string;
   attracted: string; whyMoving: string; consentComms: string; consentCredit: string; pets: string; references: string;
-  insurance: string; other: string; status: "New" | "Approved" | "Declined"; statusUpdated: string; detectedIncome: number | null;
+  insurance: string; other: string; status: Status; statusUpdated: string; detectedIncome: number | null;
 }
+
+type Status = "New" | "Invited" | "Selected" | "Declined" | "Not selected";
 
 export interface InviteTarget { unit: string; name: string; email: string; phone: string; row: number }
 
 const units = SHOWING_UNITS.filter(u => u.bookable && u.applicationSheet);
 const money = (n: number) => `$${Math.round(n).toLocaleString("en-CA")}`;
-const badge = { New: "text-bg-warning", Approved: "text-bg-success", Declined: "text-bg-secondary" } as const;
+const badge: Record<Status, string> = { New: "text-bg-warning", Invited: "text-bg-info", Selected: "text-bg-success", Declined: "text-bg-secondary", "Not selected": "text-bg-secondary" };
+type Tab = "New" | "Invited" | "Selected" | "Declined" | "All";
+const inTab = (s: Status, t: Tab) => t === "All" || s === t || (t === "Declined" && s === "Not selected");
 
-function declineText(unitLabel: string, name: string, phone: string) {
+// Before a showing ("Not a fit") vs after an invite ("Not moving forward", covers no-shows too)
+function declineText(stage: "Declined" | "Not selected", unitLabel: string, name: string, phone: string) {
   const first = name.trim().split(/\s+/)[0] || "there";
-  return `Hi ${first},\n\nThanks for taking the time to apply for ${unitLabel} at 180 Beatrice. We've had a lot of interest, and after reviewing applications we won't be moving forward with yours this time.\n\nWe really appreciate your interest, and wish you the best of luck with your search.\n\nThanks,\nAndrew\n${phone}`;
+  const body = stage === "Declined"
+    ? `Thanks for taking the time to apply for ${unitLabel} at 180 Beatrice. We've had a lot of interest, and after reviewing applications we won't be moving forward with yours this time.\n\nWe really appreciate your interest, and wish you the best of luck with your search.`
+    : `Thanks for your interest in ${unitLabel} at 180 Beatrice. We've decided to go in another direction with the unit.\n\nWe really appreciate you taking the time to apply, and wish you the best of luck with your search.`;
+  return `Hi ${first},\n\n${body}\n\nThanks,\nAndrew\n${phone}`;
 }
 
 export interface PanelBooking { unit: string; startIso: string; email: string }
@@ -28,10 +36,10 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite, book
   const [unitSlug, setUnitSlug] = useState(units[0]?.slug || "");
   const [apps, setApps] = useState<AdminApplication[] | null>(null);
   const [rent, setRent] = useState<number | null>(null);
-  const [filter, setFilter] = useState<"All" | "New" | "Approved" | "Declined">("New");
+  const [filter, setFilter] = useState<Tab>("New");
   const [error, setError] = useState("");
   const [open, setOpen] = useState<number | null>(null);
-  const [decline, setDecline] = useState<{ app: AdminApplication; message: string; send: boolean; cancelBooking: boolean } | null>(null);
+  const [decline, setDecline] = useState<{ app: AdminApplication; stage: "Declined" | "Not selected"; message: string; send: boolean; cancelBooking: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const unit = units.find(u => u.slug === unitSlug);
   const headers = { "Content-Type": "application/json", "x-admin-key": adminKey };
@@ -58,9 +66,11 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite, book
   };
 
   if (!units.length) return null;
-  const counts = { All: apps?.length || 0, New: 0, Approved: 0, Declined: 0 };
-  apps?.forEach(a => counts[a.status]++);
-  const shown = (apps || []).filter(a => filter === "All" || a.status === filter);
+  const tabs: Tab[] = ["New", "Invited", "Selected", "Declined", "All"];
+  const counts = Object.fromEntries(tabs.map(t => [t, (apps || []).filter(a => inTab(a.status, t)).length])) as Record<Tab, number>;
+  const shown = (apps || []).filter(a => inTab(a.status, filter));
+  const openDecline = (a: AdminApplication, stage: "Declined" | "Not selected") =>
+    setDecline({ app: a, stage, message: declineText(stage, unit?.label || "the unit", a.name, "647-225-4909"), send: true, cancelBooking: true });
 
   return (
     <div className="card mb-4" id="applications">
@@ -81,7 +91,7 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite, book
         </div>
 
         <div className="btn-group btn-group-sm mb-3" role="group">
-          {(["New", "Approved", "Declined", "All"] as const).map(k => (
+          {tabs.map(k => (
             <button key={k} className={`btn ${filter === k ? "btn-primary" : "btn-outline-primary"}`} onClick={() => setFilter(k)}>{k} ({counts[k]})</button>
           ))}
         </div>
@@ -114,15 +124,21 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite, book
                     </div>
                     <div className="app-actions">
                       <button className="btn btn-sm btn-outline-secondary" onClick={() => setOpen(isOpen ? null : a.row)}>{isOpen ? "Hide" : "Details"}</button>
-                      {a.status !== "Approved" && (
-                        <button className="btn btn-sm btn-success" onClick={() => onInvite({ unit: unitSlug, name: a.name, email: a.email, phone: a.phone, row: a.row })}>
-                          Approve &amp; invite
-                        </button>
+                      {a.status === "New" && (
+                        <>
+                          <button className="btn btn-sm btn-success" onClick={() => onInvite({ unit: unitSlug, name: a.name, email: a.email, phone: a.phone, row: a.row })}>Invite to showing</button>
+                          <button className="btn btn-sm btn-outline-danger" onClick={() => openDecline(a, "Declined")}>Not a fit</button>
+                        </>
                       )}
-                      {a.status !== "Declined" && (
-                        <button className="btn btn-sm btn-outline-danger" onClick={() => setDecline({ app: a, message: declineText(unit?.label || "the unit", a.name, "647-225-4909"), send: true, cancelBooking: true })}>Decline</button>
+                      {a.status === "Invited" && (
+                        <>
+                          <button className="btn btn-sm btn-success" onClick={() => { if (confirm(`Mark ${a.name} as selected for the lease? This only changes their status; no email is sent.`)) setStatus(a, "Selected"); }}>Offer the lease</button>
+                          <button className="btn btn-sm btn-outline-danger" onClick={() => openDecline(a, "Not selected")}>Not moving forward</button>
+                        </>
                       )}
-                      {a.status !== "New" && <button className="btn btn-sm btn-link" onClick={() => setStatus(a, "New")}>Reset</button>}
+                      {a.status !== "New" && a.status !== "Invited" && (
+                        <button className="btn btn-sm btn-link text-muted" title="Move back a step" onClick={() => setStatus(a, a.status === "Declined" ? "New" : "Invited")}>Undo</button>
+                      )}
                     </div>
                   </div>
                   {isOpen && (
@@ -150,9 +166,9 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite, book
         <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
-              <div className="modal-header"><h5 className="modal-title">Decline {decline.app.name}?</h5><button className="btn-close" onClick={() => setDecline(null)}></button></div>
+              <div className="modal-header"><h5 className="modal-title">{decline.stage === "Declined" ? "Not a fit" : "Not moving forward"}: {decline.app.name}</h5><button className="btn-close" onClick={() => setDecline(null)}></button></div>
               <div className="modal-body">
-                <p className="small text-muted mb-2">This marks their application as Declined in the Sheet. You can Reset it later.</p>
+                <p className="small text-muted mb-2">This marks their application as {decline.stage === "Declined" ? "Declined" : "Not selected"} in the Sheet. You can Undo it later.</p>
                 {(() => {
                   const booked = bookings.filter(b => b.unit === unit?.code && b.email.toLowerCase() === decline.app.email.toLowerCase());
                   if (!booked.length) return <p className="small mb-2">They don&apos;t have a showing booked.</p>;
@@ -173,9 +189,9 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite, book
               <div className="modal-footer">
                 <button className="btn btn-secondary" onClick={() => setDecline(null)}>Keep as is</button>
                 <button className="btn btn-danger" disabled={busy} onClick={async () => {
-                  const ok = await setStatus(decline.app, "Declined", { ...(decline.send ? { sendDecline: true, message: decline.message } : {}), cancelBooking: decline.cancelBooking });
+                  const ok = await setStatus(decline.app, decline.stage, { ...(decline.send ? { sendDecline: true, message: decline.message } : {}), cancelBooking: decline.cancelBooking });
                   if (ok) setDecline(null);
-                }}>{busy ? "Working..." : decline.send ? "Decline & send" : "Mark declined"}</button>
+                }}>{busy ? "Working..." : decline.send ? "Confirm & send" : "Confirm"}</button>
               </div>
             </div>
           </div>

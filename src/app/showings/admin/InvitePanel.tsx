@@ -70,7 +70,7 @@ export default function InvitePanel({ adminKey, windows, target, onSent }: { adm
       }
       setPreview({ html: data.html, subject: data.subject, code: data.code, link: data.link });
       if (send) {
-        setStatus(data.warning || `Sent to ${f.email}.${row ? " Marked Approved in the Sheet." : ""}`);
+        setStatus(data.warning || `Sent to ${f.email}.${row ? " Marked Invited in the Sheet." : ""}`);
         setRow(null);
         onSent();
       }

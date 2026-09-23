@@ -33,9 +33,9 @@ export async function POST(req: NextRequest) {
   if (doSend) {
     sent = await send(mail);
     if (!sent) return json({ error: "The email didn't send. Check GMAIL_APP_PASSWORD, or copy the link and send it yourself.", code, link }, 502);
-    // Invited from an application: mark it Approved in the Sheet
+    // Invited from an application: mark it Invited in the Sheet
     if (row && unit.applicationSheet) {
-      try { await setApplicationStatus(unit, Number(row), cleanEmail, "Approved"); }
+      try { await setApplicationStatus(unit, Number(row), cleanEmail, "Invited"); }
       catch (e: any) { return json({ code, link, subject: mail.subject, html, sent, warning: `Invite sent, but the Sheet wasn't updated: ${e.message}` }); }
     }
   }

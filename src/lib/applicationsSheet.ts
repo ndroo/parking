@@ -7,7 +7,8 @@ const SHEETS = "https://sheets.googleapis.com/v4/spreadsheets";
 const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
 const STATUS_HEADERS = ["Status", "Status updated"];
 
-export type ApplicationStatus = "New" | "Approved" | "Declined";
+export type ApplicationStatus = "New" | "Invited" | "Selected" | "Declined" | "Not selected";
+export const APPLICATION_STATUSES: ApplicationStatus[] = ["New", "Invited", "Selected", "Declined", "Not selected"];
 
 export interface SheetApplication {
   row: number; // 1-based sheet row
@@ -101,7 +102,7 @@ export async function listApplications(unit: ShowingUnit): Promise<SheetApplicat
     for (const [key, prefix] of FIELDS) { const c = idx(prefix); a[key] = c >= 0 ? (r[c] || "").trim() : ""; }
     if (!a.email && emailFallback >= 0) a.email = (r[emailFallback] || "").trim();
     const st = statusIdx >= 0 ? (r[statusIdx] || "").trim() : "";
-    a.status = st === "Approved" || st === "Declined" ? st : "New";
+    a.status = st === "Approved" ? "Invited" : (APPLICATION_STATUSES as string[]).includes(st) ? st : "New";
     a.statusUpdated = statusIdx >= 0 ? (r[statusIdx + 1] || "").trim() : "";
     a.detectedIncome = detectIncome(a.occupants);
     return a as SheetApplication;

@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { cancelShowing, isAdmin, listShowings } from "@/lib/showings";
 import { getUnit } from "@/lib/showingUnits";
-import { listApplications, setApplicationStatus } from "@/lib/applicationsSheet";
+import { APPLICATION_STATUSES, ApplicationStatus, listApplications, setApplicationStatus } from "@/lib/applicationsSheet";
 import { getListing } from "@/lib/listingai";
 import { buildDeclineEmail, send } from "@/lib/notify";
 
@@ -31,16 +31,17 @@ export async function POST(req: NextRequest) {
   const { unit: slug, row, email, name, status, sendDecline, message, cancelBooking } = await req.json();
   const unit = getUnit(slug);
   if (!unit?.applicationSheet) return json({ error: "No application sheet for this unit" }, 400);
-  if (!["New", "Approved", "Declined"].includes(status)) return json({ error: "Bad status" }, 400);
+  if (!APPLICATION_STATUSES.includes(status as ApplicationStatus)) return json({ error: "Bad status" }, 400);
+  const declining = status === "Declined" || status === "Not selected";
   try {
-    if (status === "Declined" && sendDecline) {
+    if (declining && sendDecline) {
       const ok = await send(buildDeclineEmail({ unit, name, email, message }));
       if (!ok) return json({ error: "The decline email didn't send, so the status wasn't changed." }, 502);
     }
     await setApplicationStatus(unit, Number(row), email, status);
     // Optionally free up any showing they had booked for this unit
     let cancelled = 0;
-    if (status === "Declined" && cancelBooking) {
+    if (declining && cancelBooking) {
       const mine = (await listShowings(unit)).filter(b => b.email.toLowerCase() === String(email).toLowerCase());
       for (const b of mine) { await cancelShowing(b.eventId); cancelled++; }
     }
