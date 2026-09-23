@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import s from "../../showings/showings.module.css";
 import type { Occupant } from "@/lib/applications";
 
@@ -28,28 +28,48 @@ function YesNo({ name, value, onChange, label, hint }: { name: string; value: st
 }
 
 export default function ApplyForm({ unit, listing }: Props) {
-  const [f, setF] = useState(() => {
-    const empty = {
-      name: "", email: "", phone: "", occupants: [blankOccupant()], moveIn: "", attracted: "", whyMoving: "",
-      consentComms: "", consentCredit: "", pets: "", references: "", insurance: "", parking: "", other: "",
-    };
-    // Restore a draft so a refresh doesn't lose everything
-    try {
-      const saved = typeof window !== "undefined" && localStorage.getItem(DRAFT_KEY(unit.slug));
-      return saved ? { ...empty, ...JSON.parse(saved) } : empty;
-    } catch {
-      return empty;
-    }
+  const [f, setF] = useState({
+    name: "", email: "", phone: "", occupants: [blankOccupant()], moveIn: "", attracted: "", whyMoving: "",
+    consentComms: "", consentCredit: "", pets: "", references: "", insurance: "", parking: "", other: "",
   });
+  const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [restored, setRestored] = useState(false);
+  const [, tick] = useState(0);
+  const loaded = useRef(false);
+
+  // Restore a saved draft after mount, so refreshes and errors never lose answers
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY(unit.slug));
+      if (raw) {
+        const d = JSON.parse(raw);
+        setF(prev => ({ ...prev, ...(d.form || d) }));
+        setSavedAt(d.savedAt || Date.now());
+        setRestored(true);
+      }
+    } catch {}
+    loaded.current = true;
+    const t = setInterval(() => tick(n => n + 1), 15000); // keep "saved x ago" fresh
+    return () => clearInterval(t);
+  }, [unit.slug]);
+
+  // Save on every change, once the draft has loaded
+  useEffect(() => {
+    if (!loaded.current) return;
+    try {
+      const now = Date.now();
+      localStorage.setItem(DRAFT_KEY(unit.slug), JSON.stringify({ form: f, savedAt: now }));
+      setSavedAt(now);
+    } catch {}
+  }, [f, unit.slug]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
 
-  const set = (patch: Partial<typeof f>) => {
-    const next = { ...f, ...patch };
-    setF(next);
-    try { localStorage.setItem(DRAFT_KEY(unit.slug), JSON.stringify(next)); } catch {}
-  };
+  const set = (patch: Partial<typeof f>) => setF(prev => ({ ...prev, ...patch }));
+  const hasAnswers = !!(f.name || f.email || f.phone || f.attracted || f.occupants.some((o: Occupant) => o.name));
+  const ago = savedAt ? Math.round((Date.now() - savedAt) / 1000) : 0;
+  const agoText = ago < 20 ? "just now" : ago < 90 ? "a minute ago" : `${Math.round(ago / 60)} minutes ago`;
   const setOcc = (i: number, patch: Partial<Occupant>) => set({ occupants: f.occupants.map((o: Occupant, j: number) => (j === i ? { ...o, ...patch } : o)) });
 
   const submit = async (e: React.FormEvent) => {
@@ -105,9 +125,17 @@ export default function ApplyForm({ unit, listing }: Props) {
           </div>
         </section>
 
+        <div className={s.saveBar} aria-live="polite">
+          {hasAnswers && savedAt ? (
+            <><i className="bi bi-cloud-check"></i> <span className={s.saveText}>{restored ? "Welcome back. " : ""}Application saved on this device <span>· {agoText}</span></span></>
+          ) : (
+            <><i className="bi bi-shield-check"></i> <span className={s.saveText}>Your answers save automatically on this device as you type</span></>
+          )}
+        </div>
+
         <div className={s.notice}>
           We pre-screen applicants before in-person viewings, so everyone&apos;s time is well spent. It takes about 5 minutes.
-          Once we&apos;ve reviewed it, we&apos;ll email you a personal link to book a showing. Your progress is saved on this device.
+          Once we&apos;ve reviewed it, we&apos;ll email you a personal link to book a showing.
         </div>
 
         <form onSubmit={submit}>

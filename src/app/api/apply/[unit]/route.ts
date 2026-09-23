@@ -58,18 +58,26 @@ export async function POST(req: NextRequest, { params }: Ctx) {
     [`entry.${e.other}`]: otherText, emailAddress: a.email,
   });
 
-  const res = await fetch(`https://docs.google.com/forms/d/e/${unit.applicationForm.formId}/formResponse`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: form.toString(),
-    redirect: "follow",
-  });
-  const text = await res.text();
-  if (!res.ok || !/freebirdFormviewerViewResponseConfirmationMessage|Your response has been recorded/i.test(text)) {
-    console.error("apply: Google Form rejected submission", res.status, text.slice(0, 500));
-    return json({ error: "We couldn't save your application. Please try again, or text Andrew at 647-225-4909." }, 502);
+  // Save into the Google Form's Sheet; the full application is also emailed to
+  // the owner, so a Sheet failure alone doesn't lose anything.
+  let savedToSheet = false;
+  try {
+    const res = await fetch(`https://docs.google.com/forms/d/e/${unit.applicationForm.formId}/formResponse`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: form.toString(),
+      redirect: "follow",
+    });
+    const text = await res.text();
+    savedToSheet = res.ok && /freebirdFormviewerViewResponseConfirmationMessage|Your response has been recorded/i.test(text);
+    if (!savedToSheet) console.error("apply: Google Form rejected submission", res.status, text.slice(0, 300));
+  } catch (err) {
+    console.error("apply: Google Form request failed", err);
   }
 
-  await notifyApplication(unit, a, occupantsText, `${req.nextUrl.origin}/showings/admin`);
+  const emailed = await notifyApplication(unit, a, occupantsText, `${req.nextUrl.origin}/showings/admin`, savedToSheet);
+  if (!savedToSheet && !emailed) {
+    return json({ error: "We couldn't send your application just now. Your answers are saved on this device, so please try again in a minute, or text Andrew at 647-225-4909." }, 502);
+  }
   return json({ ok: true });
 }

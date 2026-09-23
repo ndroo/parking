@@ -184,10 +184,10 @@ export function buildInviteEmail(p: { unit: ShowingUnit; name: string; email: st
 }
 
 // Applicant gets a receipt; owner gets the full application with a link to invite
-export async function notifyApplication(unit: ShowingUnit, a: Application, occupantsText: string, adminUrl: string) {
+export async function notifyApplication(unit: ShowingUnit, a: Application, occupantsText: string, adminUrl: string, savedToSheet: boolean): Promise<boolean> {
   const first = a.name.split(/\s+/)[0];
   const moveIn = DateTime.fromISO(a.moveIn).toFormat("cccc, LLLL d");
-  await Promise.all([
+  const [, ownerSent] = await Promise.all([
     send({
       to: a.email,
       fromName: "Andrew McGrath",
@@ -229,10 +229,13 @@ export async function notifyApplication(unit: ShowingUnit, a: Application, occup
           ...(a.other ? [{ label: "Other", value: a.other }] : []),
         ],
         buttons: [{ label: "Invite to a showing", href: adminUrl, primary: true }],
-        footer: `Also saved to the Google Form responses sheet. Reply to this email to write to ${a.name}.`,
+        footer: savedToSheet
+          ? `Also saved to the Google Form responses sheet. Reply to this email to write to ${a.name}.`
+          : `NOT saved to the Google Form sheet (the form rejected it), so this email is the only copy. Reply to write to ${a.name}.`,
       },
     }),
   ]);
+  return ownerSent;
 }
 
 export interface ParkingInfo {
