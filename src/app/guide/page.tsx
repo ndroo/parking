@@ -114,7 +114,6 @@ export default async function GuidePage() {
           <h3 className={g.h3}>Water</h3>
           <p className={g.p}>{GUIDE.utilities.water.summary}</p>
           <WaterCalculator {...GUIDE.utilities.water.example} includedAdults={GUIDE.utilities.water.includedAdults} />
-          <p className={g.small}>{GUIDE.utilities.water.example.note}</p>
         </section>
 
         <section id="ideal" className={`${s.section} ${g.block}`}>
