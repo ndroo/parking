@@ -4,6 +4,7 @@ import g from "./guide.module.css";
 import { GUIDE, GuideItem } from "@/lib/tenantGuide";
 import { getListing } from "@/lib/listingai";
 import { SHOWING_CONTACT, SHOWING_UNITS } from "@/lib/showingUnits";
+import { Gallery, ZoomImage } from "./Gallery";
 
 export const metadata: Metadata = {
   title: "Tenant guide - 180 Beatrice",
@@ -21,21 +22,6 @@ const SECTIONS = [
   { id: "kitchens-2025", label: "2025 kitchens" },
 ];
 
-function Photos({ photos }: { photos: GuideItem["photos"] }) {
-  if (!photos?.length) return null;
-  return (
-    <div className={`${g.photos} ${photos.length === 1 ? g.photosOne : ""}`}>
-      {photos.map(ph => (
-        <a key={ph.src} href={ph.src} target="_blank" rel="noopener noreferrer" className={g.photo}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={ph.src} alt={ph.alt} loading="lazy" />
-          <span>{ph.alt}</span>
-        </a>
-      ))}
-    </div>
-  );
-}
-
 function Timeline({ items }: { items: GuideItem[] }) {
   return (
     <ol className={g.timeline}>
@@ -43,7 +29,7 @@ function Timeline({ items }: { items: GuideItem[] }) {
         <li key={it.title}>
           <h3>{it.title}</h3>
           {it.body && <p>{it.body}</p>}
-          <Photos photos={it.photos} />
+          <Gallery photos={it.photos} />
         </li>
       ))}
     </ol>
@@ -127,8 +113,7 @@ export default async function GuidePage() {
           <span className={g.kicker}>Your landlords</span>
           <h2 className={g.h2}>About us</h2>
           <div className={g.about}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={GUIDE.about.photo.src} alt={GUIDE.about.photo.alt} loading="lazy" />
+            <ZoomImage photo={GUIDE.about.photo} />
             <div>{GUIDE.about.paragraphs.map(t => <p key={t} className={g.p}>{t}</p>)}</div>
           </div>
         </section>
@@ -137,8 +122,7 @@ export default async function GuidePage() {
           <span className={g.kicker}>Since 1904</span>
           <h2 className={g.h2}>History of the house</h2>
           <div className={g.about}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={GUIDE.history.photo.src} alt={GUIDE.history.photo.alt} loading="lazy" />
+            <ZoomImage photo={GUIDE.history.photo} />
             <div>
               <p className={g.p}>{GUIDE.history.body}</p>
               <p className={g.small}>{GUIDE.history.caption}</p>
