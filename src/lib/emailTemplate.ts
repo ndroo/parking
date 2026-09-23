@@ -23,12 +23,14 @@ export interface EmailContent {
   listingCard?: { photoUrl?: string; title: string; button: EmailButton };
   codeNote?: { code: string; text: string }; // small fallback at the bottom
   footer: string;
+  reason?: string; // "you applied for a rental unit" -> standard "why you got this" line
 }
 
 const C = {
   bg: "#f5f1ea", surface: "#ffffff", soft: "#faf7f2", ink: "#1d1a16", muted: "#6d665c",
   line: "#e6dfd4", accent: "#b24a26", accentSoft: "#f7e4da", ok: "#2f7a4f", okSoft: "#e1f1e6",
 };
+const BRAND = { name: "Little Italy Rentals", url: "https://little-italy-rentals.mylistingai.co" };
 const FONT = `-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif`;
 
 const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -152,7 +154,7 @@ export function renderEmail(e: EmailContent): { html: string; text: string } {
         ${contact}
       </table>
     </td></tr>
-    <tr><td style="padding:18px 8px 0;text-align:center;font-family:${FONT};font-size:12.5px;line-height:1.5;color:${C.muted}">${esc(e.footer)}</td></tr>
+    <tr><td style="padding:18px 8px 0;text-align:center;font-family:${FONT};font-size:12.5px;line-height:1.5;color:${C.muted}">${esc(e.footer)}${e.reason ? `<br><br>You received this email because ${esc(e.reason)} with <a href="${BRAND.url}" style="color:${C.muted};text-decoration:underline">${BRAND.name}</a>.` : ""}</td></tr>
   </table>
 </td></tr></table>
 </body></html>`;
@@ -171,6 +173,7 @@ export function renderEmail(e: EmailContent): { html: string; text: string } {
     e.contact && `${e.contact.text} ${[e.contact.phone, e.contact.email].filter(Boolean).join(" / ")}`,
     e.codeNote && `${e.codeNote.text} ${e.codeNote.code}`,
     e.footer,
+    e.reason && `You received this email because ${e.reason} with ${BRAND.name}: ${BRAND.url}`,
   ].filter(Boolean).join("\n\n");
 
   return { html, text };

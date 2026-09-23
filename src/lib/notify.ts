@@ -92,6 +92,7 @@ export function buildShowingEmails(kind: ShowingEvent, b: ShowingInfo, photoUrl?
       notes: { title: "A few reminders", items: reminders },
       contact: contactBlock(`If you have any questions, or need to move your time, feel free to reply to this email, or you can text or call me.`),
       footer: FOOTER,
+      reason: "you booked a showing",
     },
     moved: {
       preheader: `Now ${longDay(b.startIso)} at ${time(b.startIso)}.`,
@@ -104,6 +105,7 @@ export function buildShowingEmails(kind: ShowingEvent, b: ShowingInfo, photoUrl?
       buttons: [{ label: "Manage my booking", href: b.manageUrl, primary: true }],
       contact: contactBlock(`If you have any questions, feel free to reply to this email, or you can text or call me.`),
       footer: FOOTER,
+      reason: "you booked a showing",
     },
     cancelled: {
       preheader: `Your ${longDay(b.startIso)} showing is cancelled.`,
@@ -116,6 +118,7 @@ export function buildShowingEmails(kind: ShowingEvent, b: ShowingInfo, photoUrl?
       ],
       contact: contactBlock(`If you have any questions, feel free to reply to this email, or you can text or call me.`),
       footer: FOOTER,
+      reason: "you booked a showing",
     },
   };
 
@@ -180,6 +183,7 @@ export function buildInviteEmail(p: { unit: ShowingUnit; name: string; email: st
         button: { label: "Read the tenant guide", href: new URL(TENANT_GUIDE.url, p.link).toString() },
       },
       footer: `180 Beatrice St, Toronto`,
+      reason: "you applied for a rental unit",
     },
   };
 }
@@ -203,6 +207,7 @@ export async function notifyApplication(unit: ShowingUnit, a: Application, occup
         buttons: [{ label: "Read the tenant guide", href: new URL(TENANT_GUIDE.url, adminUrl).toString(), primary: true }, { label: "View the listing", href: unit.listingUrl }],
         contact: contactBlock(`If you have any questions, feel free to reply to this email, or you can text or call me.`),
         footer: FOOTER,
+        reason: "you applied for a rental unit",
       },
     }),
     send({
@@ -258,6 +263,7 @@ export function buildDeclineEmail(p: { unit: ShowingUnit; name: string; email: s
       preheader: `An update on your application for ${p.unit.label}.`,
       paragraphs: (p.message || declineMessage(p.unit, p.name)).split(/\n\s*\n/).map(t => t.trim()).filter(Boolean),
       footer: `180 Beatrice St, Toronto`,
+      reason: "you applied for a rental unit",
     },
   };
 }
@@ -289,6 +295,7 @@ export function buildParkingEmails(p: ParkingInfo): OutgoingEmail[] {
         buttons: [{ label: "Change or cancel", href: p.manageUrl, primary: true }],
         contact: contactBlock(`Someone in your spot or need help?`),
         footer: FOOTER,
+        reason: "you booked parking",
       },
     },
     {
