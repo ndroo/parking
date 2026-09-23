@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { DateTime } from "luxon";
 import s from "../showings.module.css";
 import type { ListingDetails } from "@/lib/listingai";
-import { BUILDING_ADDRESS, ShowingUnit } from "@/lib/showingUnits";
+import { BUILDING_ADDRESS, ShowingUnit, TENANT_GUIDE } from "@/lib/showingUnits";
 
 const TZ = "America/Toronto";
 
@@ -620,6 +620,24 @@ export default function Showings({ unit, listing, contact }: { unit: ShowingUnit
                   </div>
                   <Notes unit={unit} title="See you soon. A few reminders:" />
                 </div>
+              </div>
+            )}
+
+            {/* Final screen: more reading */}
+            {mode === "ticket" && booking && (
+              <div className={`${s.section} ${s.panel}`}>
+                <span className={s.flowTitle}>More reading</span>
+                <h2 className={s.h2} style={{ margin: "6px 0 6px" }}>Get to know the house (and us)</h2>
+                <p className={s.sub} style={{ lineHeight: 1.55 }}>
+                  Our guide covers the history of the house, the renovations, what we look for in a tenant and an FAQ.
+                  Here&apos;s the short version of how to become the selected tenant:
+                </p>
+                <ol className={s.tips}>
+                  {TENANT_GUIDE.tips.map(t => <li key={t}>{t}</li>)}
+                </ol>
+                <a className={`${s.btn} ${s.btnPrimary}`} href={TENANT_GUIDE.url} target="_blank" rel="noopener noreferrer">
+                  Read the full guide <i className="bi bi-arrow-up-right"></i>
+                </a>
               </div>
             )}
           </>

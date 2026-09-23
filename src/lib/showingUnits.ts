@@ -29,6 +29,19 @@ export const SHOWING_CONTACT = {
 
 export const BUILDING_ADDRESS = "180 Beatrice St, Toronto";
 
+// Public "General information" doc: house history, renovations, ideal tenant, FAQ
+export const TENANT_GUIDE = {
+  url: "https://docs.google.com/document/d/1R-sSgzUc_TCxS20ZF6NHeIS0VpqjryC_u_YPu-TzMk4/edit?usp=sharing",
+  tips: [
+    "Consent to a credit check, or bring a detailed credit report",
+    "Be clear about must-haves like parking or pets",
+    "Explain anything unusual in your credit or situation up front",
+    "Be reachable by phone the day after your showing",
+    "Re-confirm your interest after the viewing (or let us know if you've moved on)",
+    "Have your deposit ready within 48 hours if selected",
+  ],
+};
+
 export const SHOWING_UNITS: ShowingUnit[] = [
   {
     slug: "unit-1",

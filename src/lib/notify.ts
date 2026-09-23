@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import { DateTime } from "luxon";
 import { APP_TZ, BOOKING_OWNER_EMAIL } from "@/lib/config";
-import { BUILDING_ADDRESS, SHOWING_CONTACT, ShowingUnit } from "@/lib/showingUnits";
+import { BUILDING_ADDRESS, SHOWING_CONTACT, ShowingUnit, TENANT_GUIDE } from "@/lib/showingUnits";
 import { getListing } from "@/lib/listingai";
 import { EmailContent, renderEmail } from "@/lib/emailTemplate";
 
@@ -79,8 +79,9 @@ export function buildShowingEmails(kind: ShowingEvent, b: ShowingInfo, photoUrl?
       buttons: [
         { label: "Manage my booking", href: b.manageUrl, primary: true },
         { label: "View the listing", href: b.unit.listingUrl },
+        { label: "Read the tenant guide", href: TENANT_GUIDE.url },
       ],
-      notes: { title: "Before you visit", items: reminders },
+      notes: { title: "Before you visit", items: [...reminders, "Our tenant guide covers the house, what we look for in a tenant, and how to make your application an easy yes."] },
       contact: contactBlock(`Can't make it or running late? Please let ${SHOWING_CONTACT.name} know as early as you can so someone else can take your spot.`),
       footer: FOOTER,
     },
