@@ -574,3 +574,32 @@
 .calcResult span { font-size: 12.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 .calcResult b { font-size: 26px; letter-spacing: -0.02em; color: var(--accent); font-variant-numeric: tabular-nums; }
 .calcResult small { font-size: 13px; line-height: 1.5; color: var(--muted); }
+
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+  margin-top: 10px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.split > div:not(.splitBar) { display: grid; gap: 2px; }
+.split > div:nth-child(2) { text-align: right; }
+.split span { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.split b { font-size: 18px; font-variant-numeric: tabular-nums; }
+.split > div:first-child b { color: var(--accent); }
+.split > div:nth-child(2) b { color: var(--ok); }
+
+.splitBar {
+  grid-column: 1 / -1;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--ok);
+  overflow: hidden;
+}
+
+.splitBar i { display: block; height: 100%; background: var(--accent); transition: width 0.3s ease; }
+.split small { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); }

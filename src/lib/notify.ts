@@ -4,6 +4,7 @@ import { APP_TZ, BOOKING_OWNER_EMAIL } from "@/lib/config";
 import { BUILDING_ADDRESS, SHOWING_CONTACT, ShowingUnit, TENANT_GUIDE } from "@/lib/showingUnits";
 import { getListing } from "@/lib/listingai";
 import { EmailContent, renderEmail } from "@/lib/emailTemplate";
+import type { Application } from "@/lib/applications";
 
 // Sends mail from the owner's Gmail using an app password. When the env vars
 // are missing, emails are skipped (logged) so bookings still work.
@@ -18,20 +19,23 @@ export interface OutgoingEmail {
   to: string;
   subject: string;
   replyTo?: string;
+  fromName?: string;
   content: EmailContent;
 }
 
-async function send(mail: OutgoingEmail): Promise<void> {
+export async function send(mail: OutgoingEmail): Promise<boolean> {
   if (!transport) {
     console.log(`[notify] GMAIL_APP_PASSWORD not set; skipped "${mail.subject}" to ${mail.to}`);
-    return;
+    return false;
   }
   const { html, text } = renderEmail(mail.content);
   try {
-    await transport.sendMail({ from: `"180 Beatrice" <${GMAIL_USER}>`, to: mail.to, subject: mail.subject, html, text, replyTo: mail.replyTo });
+    await transport.sendMail({ from: `"${mail.fromName || "180 Beatrice"}" <${GMAIL_USER}>`, to: mail.to, subject: mail.subject, html, text, replyTo: mail.replyTo });
+    return true;
   } catch (e) {
     // Never fail a booking because an email didn't send
     console.error(`[notify] failed "${mail.subject}" to ${mail.to}`, e);
+    return false;
   }
 }
 
@@ -152,6 +156,83 @@ export function buildShowingEmails(kind: ShowingEvent, b: ShowingInfo, photoUrl?
 export async function notifyShowing(kind: ShowingEvent, b: ShowingInfo, previousStartIso?: string) {
   const listing = kind === "cancelled" ? null : await getListing(b.unit.listingId);
   await Promise.all(buildShowingEmails(kind, b, listing?.photos[0]?.url, previousStartIso).map(send));
+}
+
+// Approval email with a personal booking link, sent from the admin page
+export function buildInviteEmail(p: { unit: ShowingUnit; name: string; email: string; code: string; link: string; message: string; photoUrl?: string }): OutgoingEmail {
+  return {
+    to: p.email,
+    fromName: "Andrew McGrath",
+    subject: `${p.unit.label}, 180 Beatrice: book your showing`,
+    content: {
+      preheader: `Your invite to book a showing at ${p.unit.label}, 180 Beatrice.`,
+      photoUrl: p.photoUrl,
+      badge: { text: "Application approved for a showing", tone: "ok" },
+      title: `Book your showing`,
+      paragraphs: p.message.split(/\n\s*\n/).map(t => t.trim()).filter(Boolean),
+      refLabel: "Your invite code",
+      refCode: p.code,
+      buttons: [{ label: "Pick a showing time", href: p.link, primary: true }, { label: "View the listing", href: p.unit.listingUrl }],
+      callout: {
+        title: "Read our tenant guide",
+        body: "A 5 minute read on the house, what we look for in a tenant, and what's helpful to share with your application.",
+        button: { label: "Read the tenant guide", href: new URL(TENANT_GUIDE.url, p.link).toString() },
+      },
+      footer: `The button above is your personal booking link. You can also enter your invite code and email on the booking page.`,
+    },
+  };
+}
+
+// Applicant gets a receipt; owner gets the full application with a link to invite
+export async function notifyApplication(unit: ShowingUnit, a: Application, occupantsText: string, adminUrl: string) {
+  const first = a.name.split(/\s+/)[0];
+  const moveIn = DateTime.fromISO(a.moveIn).toFormat("cccc, LLLL d");
+  await Promise.all([
+    send({
+      to: a.email,
+      fromName: "Andrew McGrath",
+      subject: `Application received: ${unit.label}, 180 Beatrice`,
+      content: {
+        preheader: `Thanks ${first}, we've got your application.`,
+        badge: { text: "Application received", tone: "ok" },
+        title: `Thanks for applying, ${first}.`,
+        paragraphs: [
+          `We've received your application for ${unit.label} at 180 Beatrice. We review every application personally, and if it looks like a good fit on both sides, we'll email you a personal link to book a showing.`,
+          `In the meantime, feel free to have a read of our tenant guide. It covers the house, what we look for, and what's helpful to share to make your application as strong as possible.`,
+        ],
+        buttons: [{ label: "Read the tenant guide", href: new URL(TENANT_GUIDE.url, adminUrl).toString(), primary: true }, { label: "View the listing", href: unit.listingUrl }],
+        contact: contactBlock(`If you have any questions, feel free to reply to this email, or you can text or call me.`),
+        footer: FOOTER,
+      },
+    }),
+    send({
+      to: BOOKING_OWNER_EMAIL,
+      replyTo: a.email,
+      subject: `New application: ${unit.label} - ${a.name}`,
+      content: {
+        preheader: `${a.occupants.length} occupant(s) · move-in ${moveIn} · ${a.phone}`,
+        badge: { text: "New application", tone: "accent" },
+        title: `${a.name} applied for ${unit.label}`,
+        rows: [
+          { label: "Phone", value: a.phone, href: `tel:${a.phone.replace(/[^\d+]/g, "")}` },
+          { label: "Email", value: a.email, href: `mailto:${a.email}` },
+          { label: "Move-in", value: moveIn },
+          { label: "Occupants", value: occupantsText },
+          { label: "Pets", value: a.pets },
+          { label: "Parking", value: a.parking === "Yes" ? "Interested" : "No" },
+          { label: "Attracted by", value: a.attracted },
+          { label: "Moving because", value: a.whyMoving },
+          { label: "References", value: a.references },
+          { label: "Credit check", value: a.consentCredit },
+          { label: "Email notices", value: a.consentComms },
+          { label: "Insurance", value: a.insurance },
+          ...(a.other ? [{ label: "Other", value: a.other }] : []),
+        ],
+        buttons: [{ label: "Invite to a showing", href: adminUrl, primary: true }],
+        footer: `Also saved to the Google Form responses sheet. Reply to this email to write to ${a.name}.`,
+      },
+    }),
+  ]);
 }
 
 export interface ParkingInfo {

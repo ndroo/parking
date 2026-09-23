@@ -18,19 +18,21 @@ function Stepper({ label, value, onChange, min = 0, max = 20 }: { label: string;
 }
 
 // Rough estimate of a household's monthly water charge, agreed at lease signing
-export default function WaterCalculator({ quarterlyBill, yourAdults, otherAdults, includedAdults, note }: {
-  quarterlyBill: number; yourAdults: number; otherAdults: number; includedAdults: number; note: string;
+export default function WaterCalculator({ quarterlyBill, yourAdults, otherAdultsPerUnit, otherUnits, includedAdults, note }: {
+  quarterlyBill: number; yourAdults: number; otherAdultsPerUnit: number; otherUnits: number; includedAdults: number; note: string;
 }) {
   const [bill, setBill] = useState(String(quarterlyBill));
   const [yours, setYours] = useState(yourAdults);
-  const [others, setOthers] = useState(otherAdults);
+  const [perOther, setPerOther] = useState(otherAdultsPerUnit);
+  const others = perOther * otherUnits;
 
   const billNum = Math.max(0, Number(bill) || 0);
   const totalAdults = yours + others;
   const extra = Math.max(0, yours - includedAdults);
   const perAdultMonthly = totalAdults > 0 ? billNum / 3 / totalAdults : 0;
   const monthly = extra * perAdultMonthly;
-  const changed = billNum !== quarterlyBill || yours !== yourAdults || others !== otherAdults;
+  const monthlyBill = billNum / 3;
+  const changed = billNum !== quarterlyBill || yours !== yourAdults || perOther !== otherAdultsPerUnit;
 
   return (
     <div className={g.calc}>
@@ -38,15 +40,15 @@ export default function WaterCalculator({ quarterlyBill, yourAdults, otherAdults
         <span className={g.calcBadge}>Example</span>
         <span className={g.calcHint}>Estimate a monthly water charge</span>
         {changed && (
-          <button type="button" className={g.calcReset} onClick={() => { setBill(String(quarterlyBill)); setYours(yourAdults); setOthers(otherAdults); }}>
+          <button type="button" className={g.calcReset} onClick={() => { setBill(String(quarterlyBill)); setYours(yourAdults); setPerOther(otherAdultsPerUnit); }}>
             Reset
           </button>
         )}
       </div>
 
       <div className={g.calcInputs3}>
-        <Stepper label="Adults in your unit" value={yours} onChange={setYours} />
-        <Stepper label="Adults in other units" value={others} onChange={setOthers} />
+        <Stepper label="Adults in your unit" value={yours} onChange={setYours} min={1} />
+        <Stepper label="Adults per other unit" value={perOther} onChange={setPerOther} min={includedAdults} />
         <label className={g.calcField}>
           <span>Building water bill (quarterly)</span>
           <div className={g.calcMoney}>
@@ -64,6 +66,14 @@ export default function WaterCalculator({ quarterlyBill, yourAdults, otherAdults
             ? `${extra} adult${extra === 1 ? "" : "s"} above ${includedAdults} × ${money(perAdultMonthly)} (each adult's monthly share: ${money(billNum)} ÷ 3 months ÷ ${totalAdults} adults)`
             : `Water is included for up to ${includedAdults} adults.`}
         </small>
+      </div>
+      <div className={g.split}>
+        <div><span>You pay</span><b>{money(monthly)}/mo</b></div>
+        <div><span>We pay</span><b>{money(Math.max(0, monthlyBill - monthly))}/mo</b></div>
+        <div className={g.splitBar} aria-hidden="true">
+          <i style={{ width: `${monthlyBill > 0 ? Math.min(100, (monthly / monthlyBill) * 100) : 0}%` }}></i>
+        </div>
+        <small>Of an average {money(monthlyBill)} per month for the whole building ({otherUnits} other units assumed at {perOther} adults each).</small>
       </div>
       <p className={g.small}>{note}</p>
     </div>

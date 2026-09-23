@@ -9,6 +9,8 @@ export interface EmailContent {
   badge?: { text: string; tone: "ok" | "accent" | "muted" };
   title: string;
   intro?: string;
+  paragraphs?: string[]; // free-form body text, e.g. a personal message
+  refLabel?: string;
   when?: { eyebrow: string; big: string; sub: string; subHref?: string; struck?: string };
   refCode?: string;
   rows?: { label: string; value: string; href?: string }[];
@@ -56,6 +58,9 @@ export function renderEmail(e: EmailContent): { html: string; text: string } {
   }
   parts.push(`<h1 style="margin:0 0 10px;font-size:26px;line-height:1.2;letter-spacing:-0.02em;font-weight:700;color:${C.ink}">${esc(e.title)}</h1>`);
   if (e.intro) parts.push(`<p style="margin:0 0 20px;font-size:16px;line-height:1.55;color:${C.muted}">${esc(e.intro)}</p>`);
+  if (e.paragraphs?.length) {
+    parts.push(e.paragraphs.map(t => `<p style="margin:0 0 14px;font-size:15.5px;line-height:1.6;color:${C.ink}">${esc(t).replace(/\n/g, "<br>")}</p>`).join(""));
+  }
 
   if (e.when) {
     parts.push(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;border-radius:16px;background:${C.accent}"><tr><td style="padding:20px 22px;color:#ffffff;font-family:${FONT}">
@@ -71,14 +76,14 @@ export function renderEmail(e: EmailContent): { html: string; text: string } {
 
   if (e.refCode) {
     parts.push(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;border:1px dashed ${C.line};border-radius:14px;background:${C.soft}"><tr><td style="padding:14px 18px;font-family:${FONT}">
-      <div style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:${C.muted}">Reference code</div>
+      <div style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:${C.muted}">${esc(e.refLabel || "Reference code")}</div>
       <div style="font-family:'SF Mono',Menlo,Consolas,monospace;font-size:26px;font-weight:700;letter-spacing:0.16em;color:${C.ink};margin-top:4px">${esc(e.refCode)}</div>
     </td></tr></table>`);
   }
 
   if (e.rows?.length) {
     parts.push(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;border-top:1px solid ${C.line}">${e.rows
-      .map(r => `<tr><td style="padding:10px 12px 10px 0;border-bottom:1px solid ${C.line};font-size:14px;color:${C.muted};width:90px;vertical-align:top">${esc(r.label)}</td><td style="padding:10px 0;border-bottom:1px solid ${C.line};font-size:15px;color:${C.ink}">${r.href ? `<a href="${esc(r.href)}" style="color:${C.accent};text-decoration:none">${esc(r.value)}</a>` : esc(r.value)}</td></tr>`)
+      .map(r => `<tr><td style="padding:10px 12px 10px 0;border-bottom:1px solid ${C.line};font-size:14px;color:${C.muted};width:90px;vertical-align:top">${esc(r.label)}</td><td style="padding:10px 0;border-bottom:1px solid ${C.line};font-size:15px;color:${C.ink}">${r.href ? `<a href="${esc(r.href)}" style="color:${C.accent};text-decoration:none">${esc(r.value)}</a>` : esc(r.value).replace(/\n/g, "<br>")}</td></tr>`)
       .join("")}</table>`);
   }
 
@@ -137,6 +142,7 @@ export function renderEmail(e: EmailContent): { html: string; text: string } {
   const text = [
     e.title,
     e.intro,
+    e.paragraphs?.join("\n\n"),
     e.when && `${e.when.eyebrow}: ${e.when.big}${e.when.struck ? ` (was ${e.when.struck})` : ""}\n${e.when.sub}`,
     e.refCode && `Reference code: ${e.refCode}`,
     e.rows?.map(r => `${r.label}: ${r.value}`).join("\n"),

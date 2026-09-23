@@ -7,6 +7,10 @@ export interface ShowingWindow {
   end: string;   // HH:mm, exclusive
 }
 
+export type ApplicationField =
+  | "name" | "email" | "phone" | "occupants" | "moveIn" | "attracted" | "whyMoving"
+  | "consentComms" | "consentCredit" | "pets" | "references" | "insurance" | "other";
+
 export interface ShowingUnit {
   slug: string;  // URL segment
   code: string;  // digits only; used in calendar event ids
@@ -15,6 +19,9 @@ export interface ShowingUnit {
   listingUrl: string;
   listingId: string; // ListingAI listing slug; details and photos are pulled live from it
   bookable: boolean; // false shows the unit and listing but no bookable times (e.g. currently rented)
+  applyUrl?: string; // where people apply (invites to book are sent after approval)
+  // The on-site application posts into this Google Form, so responses keep landing in its Sheet
+  applicationForm?: { formId: string; entries: Record<ApplicationField, string> };
   slotMinutes: number;
   windows: ShowingWindow[];
   facts: { icon: string; title: string; body: string }[];
@@ -75,6 +82,16 @@ export const SHOWING_UNITS: ShowingUnit[] = [
     listingUrl: "https://little-italy-rentals.mylistingai.co/listing/180-beatrice-st-toronto-on-m6g-3g1-canada-167074",
     listingId: "180-beatrice-st-toronto-on-m6g-3g1-canada-167074",
     bookable: true,
+    applyUrl: "/apply/unit-3",
+    applicationForm: {
+      formId: "1FAIpQLSeEz_6SP8wuJ1_ANq_NCQgeffQ18WkADexYPRBTzYh3CD0pOA",
+      entries: {
+        name: "1528303781", email: "1411819975", phone: "1831100467", occupants: "862207402",
+        moveIn: "768604628", attracted: "975410154", whyMoving: "1579895723", consentComms: "941400864",
+        consentCredit: "161059718", pets: "570205733", references: "643577645", insurance: "1263745693",
+        other: "1396948514",
+      },
+    },
     slotMinutes: 15,
     windows: [
       { date: "2026-10-02", start: "17:30", end: "20:00" },

@@ -54,6 +54,24 @@ const storeFor = (unit: ShowingUnit) => {
   };
 };
 
+interface InviteInfo { token?: string; code?: string; email: string; name: string; phone: string }
+
+// Remembers a verified invite on this device, per unit
+const inviteStoreFor = (unit: ShowingUnit) => {
+  const key = `beatriceInvite:${unit.slug}`;
+  return {
+    get(): InviteInfo | null {
+      try { return JSON.parse(localStorage.getItem(key) || "null"); } catch { return null; }
+    },
+    set(i: InviteInfo) {
+      try { localStorage.setItem(key, JSON.stringify(i)); } catch {}
+    },
+    clear() {
+      try { localStorage.removeItem(key); } catch {}
+    },
+  };
+};
+
 function calendarLinks(unit: ShowingUnit, contact: Contact, b: Booking) {
   const address = `${unit.label}, ${BUILDING_ADDRESS}`;
   const a = DateTime.fromISO(b.startIso).toUTC().toFormat("yyyyMMdd'T'HHmmss'Z'");
@@ -231,6 +249,10 @@ export default function Showings({ unit, listing, contact }: { unit: ShowingUnit
   const [notice, setNotice] = useState("");
   const [copied, setCopied] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [invite, setInvite] = useState<InviteInfo | null>(null);
+  const [inviteChecked, setInviteChecked] = useState(false);
+  const [codeForm, setCodeForm] = useState({ code: "", email: "" });
+  const inviteStore = inviteStoreFor(unit);
   const flowRef = useRef<HTMLDivElement>(null);
   const continueRef = useRef<HTMLDivElement>(null);
 
@@ -251,6 +273,20 @@ export default function Showings({ unit, listing, contact }: { unit: ShowingUnit
     if (!unit.bookable) return;
     load();
     const t = setInterval(load, 30000);
+
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("invite");
+    if (token) {
+      // Drop the token from the address bar once read
+      params.delete("invite");
+      window.history.replaceState(null, "", window.location.pathname + (params.toString() ? `?${params}` : "") + window.location.hash);
+      verifyInvite({ token }).finally(() => setInviteChecked(true));
+    } else {
+      const saved = inviteStore.get();
+      if (saved) acceptInvite(saved);
+      setInviteChecked(true);
+    }
+
     const saved = store.get();
     if (saved) {
       manage({ action: "lookup", ...saved }).then(({ ok, data }) => {
@@ -265,6 +301,36 @@ export default function Showings({ unit, listing, contact }: { unit: ShowingUnit
     }
     return () => clearInterval(t);
   }, []);
+
+  const acceptInvite = (i: InviteInfo) => {
+    setInvite(i);
+    inviteStore.set(i);
+    setForm(f => ({ ...f, email: i.email, name: f.name || i.name, phone: f.phone || i.phone }));
+  };
+
+  const verifyInvite = async (input: { token?: string; code?: string; email?: string }) => {
+    const res = await fetch(`/api/showings/${unit.slug}/invite`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error || "That invite didn't work");
+      return false;
+    }
+    acceptInvite({ token: input.token, code: input.code?.toUpperCase(), ...data.invite });
+    setError("");
+    return true;
+  };
+
+  const submitCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    const ok = await verifyInvite({ code: codeForm.code, email: codeForm.email });
+    setBusy(false);
+    if (ok) scrollTo(flowRef);
+  };
 
   const scrollTo = (ref: React.RefObject<HTMLDivElement | null>, block: ScrollLogicalPosition = "start") =>
     setTimeout(() => ref.current?.scrollIntoView({ behavior: "smooth", block }), 60);
@@ -302,7 +368,7 @@ export default function Showings({ unit, listing, contact }: { unit: ShowingUnit
       const res = await fetch(`/api/showings/${unit.slug}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ startIso: selected.startIso, ...form }),
+        body: JSON.stringify({ startIso: selected.startIso, ...form, invite: invite && { token: invite.token, code: invite.code, email: invite.email } }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -310,6 +376,7 @@ export default function Showings({ unit, listing, contact }: { unit: ShowingUnit
         if (res.status === 409) load();
         return;
       }
+      inviteStore.clear();
       done(data.booking);
     } finally {
       setBusy(false);
@@ -426,6 +493,41 @@ export default function Showings({ unit, listing, contact }: { unit: ShowingUnit
               <button className={`${s.btn} ${s.btnPrimary} ${s.btnBlock}`} disabled={busy}>{busy ? "Looking..." : "Find my booking"}</button>
             </form>
           </div>
+        ) : mode === "book" && !invite && !booking ? (
+          inviteChecked ? (
+            <div className={`${s.section} ${s.panel} ${s.gate}`}>
+              <div className={s.closedIcon}><i className="bi bi-envelope-open-heart"></i></div>
+              <h2 className={s.h2}>Showings are by invitation</h2>
+              <p className={s.sub}>
+                Once we&apos;ve reviewed your application, we&apos;ll email you a personal link to book a time. Already approved?
+                Tap the link in your approval email, or enter your invite code below.
+              </p>
+              <form onSubmit={submitCode} className={s.gateForm}>
+                <div className={s.fields}>
+                  <div className={s.field}>
+                    <label htmlFor="inv-code">Invite code</label>
+                    <input id="inv-code" value={codeForm.code} onChange={e => setCodeForm({ ...codeForm, code: e.target.value.toUpperCase() })} placeholder="e.g. K7PQ2MXA" required autoCapitalize="characters" />
+                  </div>
+                  <div className={s.field}>
+                    <label htmlFor="inv-email">Email you applied with</label>
+                    <input id="inv-email" type="email" value={codeForm.email} onChange={e => setCodeForm({ ...codeForm, email: e.target.value })} required autoComplete="email" />
+                  </div>
+                </div>
+                {error && <div className={s.error}>{error}</div>}
+                <button className={`${s.btn} ${s.btnPrimary} ${s.btnBlock}`} disabled={busy}>{busy ? "Checking..." : "Unlock booking"}</button>
+              </form>
+              <div className={s.gateApply}>
+                <div>
+                  <b>Haven&apos;t applied yet?</b>
+                  <span>Apply first, and we&apos;ll be in touch with a booking link.</span>
+                </div>
+                {unit.applyUrl && (
+                  <a className={`${s.btn} ${s.btnPrimary}`} href={unit.applyUrl}>Apply for {unit.label} <i className="bi bi-arrow-right"></i></a>
+                )}
+              </div>
+              <button className={s.linkBtn} onClick={() => { setMode("lookup"); setError(""); }}>Already booked? Manage it</button>
+            </div>
+          ) : null
         ) : (
           <>
             <div className={s.flowHead}>
@@ -525,7 +627,7 @@ export default function Showings({ unit, listing, contact }: { unit: ShowingUnit
                   </div>
                   <div className={s.field}>
                     <label htmlFor="f-email">Email</label>
-                    <input id="f-email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required autoComplete="email" />
+                    <input id="f-email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required autoComplete="email" readOnly={!!invite} title={invite ? "This is the email your invite was sent to" : undefined} />
                   </div>
                   <div className={s.field}>
                     <label htmlFor="f-pet">Pet you&apos;ll bring <span className={s.optional}>(optional)</span></label>

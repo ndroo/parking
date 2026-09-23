@@ -1175,3 +1175,97 @@
 .guideText b { font-size: 16.5px; }
 .guideText span { font-size: 13.5px; line-height: 1.45; color: var(--muted); }
 .guideArrow { font-size: 20px; color: var(--accent); }
+
+/* Invitation gate */
+.gate { text-align: center; }
+.gate .sub { max-width: 520px; margin: 6px auto 0; line-height: 1.55; }
+.gateForm { text-align: left; margin: 20px 0 16px; }
+
+.gateApply {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  text-align: left;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  border-radius: 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+}
+
+.gateApply div { display: grid; gap: 2px; }
+.gateApply b { font-size: 15px; }
+.gateApply span { font-size: 13.5px; color: var(--muted); }
+
+/* Application form */
+.applyHero {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  margin: 8px 0 18px;
+}
+
+.applyHero img {
+  width: 120px;
+  height: 120px;
+  border-radius: 18px;
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 480px) {
+  .applyHero img { width: 84px; height: 84px; border-radius: 14px; }
+}
+
+.applyHero .eyebrow { margin-bottom: 10px; }
+.applyHero .title { margin-bottom: 4px; }
+
+.field textarea {
+  width: 100%;
+  border-radius: 12px;
+  border: 1.5px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+  padding: 12px 14px;
+  outline: none;
+  resize: vertical;
+}
+
+.field textarea:focus { border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 4px var(--accent-soft); }
+
+.hint { font-size: 13.5px; line-height: 1.5; color: var(--muted); margin: 0 0 8px; }
+.linkInline { color: var(--accent); text-decoration: underline; }
+
+.occupant {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px;
+  margin: 14px 0;
+  background: var(--surface-2);
+}
+
+.occupant .field input { background: var(--surface); }
+.occupantHead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+
+.yesNo { border: 0; padding: 0; margin: 0; }
+.yesNo legend { font-size: 14.5px; font-weight: 650; margin-bottom: 8px; float: none; width: auto; padding: 0; line-height: 1.4; }
+.yesNoOpts { display: flex; gap: 8px; }
+
+.yesNoOpts label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.yesNoOpts input { accent-color: var(--accent); }
+.yesNoOn { border-color: var(--accent) !important; background: var(--accent-soft) !important; }

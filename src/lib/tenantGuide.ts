@@ -56,8 +56,9 @@ export const GUIDE = {
       summary: "We set water terms when you sign your lease, based on the number of occupants 18 and over living in the unit. Water is included for households of up to 2 adults. For larger households, we agree a fixed monthly water charge in the lease. If the number of adults changes during the lease, the lease allows either of us to reassess it.",
       example: {
         quarterlyBill: 420,
-        yourAdults: 3,
-        otherAdults: 4,
+        yourAdults: 2,
+        otherAdultsPerUnit: 2,
+        otherUnits: 2,
         note: "This is only an estimate to give you a feel for it. It shares the building's water bill evenly per adult, for adults above 2 in your unit. The actual amount is agreed with you before signing.",
       },
     },

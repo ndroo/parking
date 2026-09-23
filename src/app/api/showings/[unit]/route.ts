@@ -3,6 +3,7 @@ import { DateTime } from "luxon";
 import { createShowing, findSlot, getSlots, listShowings, SlotTakenError } from "@/lib/showings";
 import { getUnit } from "@/lib/showingUnits";
 import { notifyShowing } from "@/lib/notify";
+import { resolveInvite } from "@/lib/invites";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest, { params }: Ctx) {
   if (!unit) return json({ error: "Unknown unit" }, 404);
   if (!unit.bookable) return json({ error: `${unit.label} isn't taking showings right now` }, 403);
   try {
-    const { startIso, name, email, phone, pet } = await req.json();
+    const { startIso, name, email, phone, pet, invite } = await req.json();
     const cleanName = String(name || "").trim().slice(0, 100);
     const cleanEmail = String(email || "").trim().toLowerCase().slice(0, 200);
     const cleanPhone = String(phone || "").trim().slice(0, 40);
@@ -46,6 +47,11 @@ export async function POST(req: NextRequest, { params }: Ctx) {
       return json({ error: "Name, email, phone and a time are required" }, 400);
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) return json({ error: "Please enter a valid email" }, 400);
+
+    // Only approved applicants (with an invite for this unit and email) can book
+    const inv = resolveInvite(unit.slug, { token: invite?.token, code: invite?.code, email: invite?.email });
+    if (!inv) return json({ error: "Showings are by invitation. Please use the link or code from your approval email." }, 403);
+    if (inv.email !== cleanEmail) return json({ error: `Please book with the email your invite was sent to (${inv.email}).` }, 403);
 
     const slot = findSlot(unit, startIso);
     if (!slot) return json({ error: "That isn't one of the showing times" }, 400);

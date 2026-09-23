@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { DateTime } from "luxon";
 import { getUnitByCode } from "@/lib/showingUnits";
+import InvitePanel from "./InvitePanel";
 
 const TZ = "America/Toronto";
 const KEY_STORAGE = "showingsAdminKey";
@@ -67,6 +68,7 @@ export default function ShowingsAdmin() {
   let lastDay = "";
   return (
     <div className="container py-4">
+      <InvitePanel adminKey={key} />
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h1 className="h4 mb-0">Showings ({bookings.length})</h1>
         <button className="btn btn-sm btn-outline-secondary" onClick={() => load(key)}><i className="bi bi-arrow-clockwise"></i> Refresh</button>
