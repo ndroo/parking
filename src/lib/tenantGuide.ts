@@ -47,7 +47,10 @@ export const GUIDE = {
 
   utilities: {
     included: ["Heat", "Water (see below)"],
-    notIncluded: [{ name: "Hydro", note: "Each unit has its own meter, typically $50-125/month depending on usage." }],
+    notIncluded: [
+      { name: "Hydro", note: "Each unit has its own meter, typically $50-125/month depending on usage." },
+      { name: "Internet", note: "Set up your own plan. The house is wired for both fibre optic and cable internet, so you can pick the provider you like." },
+    ],
     water: {
       included: 2,
       summary: "Water is included in your rent for up to 2 people per unit. Once a year we review how many people live in each unit. For each person above 2, the unit pays that person's share of the building's water bill, calculated each quarter when the bill arrives. Units with fewer than 2 people don't get a credit.",
