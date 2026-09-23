@@ -262,7 +262,8 @@ export default function Showings({ unit, listing, contact }: { unit: ShowingUnit
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setSlots(data.slots);
-      setActiveDay(d => d || dayKey((data.slots.find((x: Slot) => !x.taken && !x.past) || data.slots[0]).startIso));
+      const first = data.slots.find((x: Slot) => !x.taken && !x.past) || data.slots[0];
+      if (first) setActiveDay(d => (d && data.slots.some((x: Slot) => dayKey(x.startIso) === d) ? d : dayKey(first.startIso)));
       setLoadError("");
     } catch (e: any) {
       setLoadError(e.message || "Could not load showing times");
@@ -558,6 +559,9 @@ export default function Showings({ unit, listing, contact }: { unit: ShowingUnit
                 </div>
 
                 {loadError && <div className={s.error}>{loadError}</div>}
+                {slots && slots.length === 0 && (
+                  <div className={s.notice}>No showing times are open right now. We&apos;ll email you when new times are added, or get in touch below.</div>
+                )}
 
                 <div className={s.days}>
                   {Object.entries(days).map(([k, list]) => {

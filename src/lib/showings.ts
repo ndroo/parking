@@ -2,7 +2,7 @@ import { DateTime } from "luxon";
 import { customAlphabet } from "nanoid";
 import { getAccessToken } from "@/lib/google";
 import { APP_TZ } from "@/lib/config";
-import { ShowingUnit, SHOWING_UNITS } from "@/lib/showingUnits";
+import { ShowingUnit } from "@/lib/showingUnits";
 
 // All units share one calendar; each event is tagged with its unit code.
 export const CALENDAR_ID_SHOWINGS = (process.env.CALENDAR_ID_SHOWINGS || "").trim();
@@ -29,23 +29,112 @@ export interface ShowingBooking {
   createdAt: string;
 }
 
-export function getSlots(unit: ShowingUnit): ShowingSlot[] {
+// A showing window is a calendar event on the showings calendar. Windows
+// created from the admin page are tagged kind=window; ones added by hand in
+// Google Calendar are recognised by a title like "Showing window: Unit 3".
+export interface ShowingWindow {
+  id: string;
+  unit: string; // unit code
+  startIso: string;
+  endIso: string;
+  fromAdmin: boolean;
+}
+
+const startOfToday = () => DateTime.now().setZone(APP_TZ).startOf("day");
+const iso = (d: string) => DateTime.fromISO(d).setZone(APP_TZ).toISO({ suppressMilliseconds: true })!;
+
+function windowUnitCode(e: any): string | null {
+  const p = e.extendedProperties?.private || {};
+  if (p.kind === "window") return p.unit || null;
+  const title = e.summary || "";
+  if (!/showing window/i.test(title)) return null;
+  return /unit\s*([0-9]+)/i.exec(title)?.[1] || null;
+}
+
+async function listEvents(timeMin: DateTime, timeMax: DateTime): Promise<any[]> {
+  const token = await getAccessToken();
+  const items: any[] = [];
+  let pageToken = "";
+  do {
+    const url = new URL(`${BASE_URL}/calendars/${encodeURIComponent(CALENDAR_ID_SHOWINGS)}/events`);
+    url.searchParams.set("timeMin", timeMin.toISO()!);
+    url.searchParams.set("timeMax", timeMax.toISO()!);
+    url.searchParams.set("singleEvents", "true");
+    url.searchParams.set("maxResults", "250");
+    if (pageToken) url.searchParams.set("pageToken", pageToken);
+    const res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+    if (!res.ok) throw new Error(`listEvents failed: ${res.status} ${await res.text()}`);
+    const json = await res.json();
+    items.push(...(json.items || []));
+    pageToken = json.nextPageToken || "";
+  } while (pageToken);
+  return items.filter(e => e.status !== "cancelled" && e.start?.dateTime);
+}
+
+// Windows from today onward (past windows are never offered)
+export async function listWindows(unit?: ShowingUnit, opts: { includePast?: boolean } = {}): Promise<ShowingWindow[]> {
+  const from = opts.includePast ? startOfToday().minus({ days: 90 }) : startOfToday();
+  const events = await listEvents(from, startOfToday().plus({ days: 365 }));
+  return events
+    .map(e => ({ e, code: windowUnitCode(e) }))
+    .filter(({ code }) => code && (!unit || code === unit.code))
+    .map(({ e, code }) => ({ id: e.id, unit: code!, startIso: iso(e.start.dateTime), endIso: iso(e.end.dateTime), fromAdmin: e.extendedProperties?.private?.kind === "window" }))
+    .sort((a, b) => a.startIso.localeCompare(b.startIso));
+}
+
+export function slotsFromWindows(unit: ShowingUnit, windows: ShowingWindow[]): ShowingSlot[] {
+  const seen = new Set<number>();
   const slots: ShowingSlot[] = [];
-  for (const w of unit.windows) {
-    let t = DateTime.fromISO(`${w.date}T${w.start}`, { zone: APP_TZ });
-    const end = DateTime.fromISO(`${w.date}T${w.end}`, { zone: APP_TZ });
-    while (t < end) {
+  for (const w of windows.filter(w => w.unit === unit.code)) {
+    let t = DateTime.fromISO(w.startIso, { zone: APP_TZ });
+    const end = DateTime.fromISO(w.endIso, { zone: APP_TZ });
+    while (t.plus({ minutes: unit.slotMinutes }) <= end) {
       const next = t.plus({ minutes: unit.slotMinutes });
-      slots.push({ startIso: t.toISO({ suppressMilliseconds: true })!, endIso: next.toISO({ suppressMilliseconds: true })! });
+      if (!seen.has(t.toMillis())) {
+        seen.add(t.toMillis());
+        slots.push({ startIso: t.toISO({ suppressMilliseconds: true })!, endIso: next.toISO({ suppressMilliseconds: true })! });
+      }
       t = next;
     }
   }
-  return slots;
+  return slots.sort((a, b) => a.startIso.localeCompare(b.startIso));
 }
 
-export function findSlot(unit: ShowingUnit, startIso: string): ShowingSlot | undefined {
+export async function getSlots(unit: ShowingUnit): Promise<ShowingSlot[]> {
+  return slotsFromWindows(unit, await listWindows(unit));
+}
+
+export async function findSlot(unit: ShowingUnit, startIso: string): Promise<ShowingSlot | undefined> {
   const target = DateTime.fromISO(startIso).toMillis();
-  return getSlots(unit).find(s => DateTime.fromISO(s.startIso).toMillis() === target);
+  return (await getSlots(unit)).find(s => DateTime.fromISO(s.startIso).toMillis() === target);
+}
+
+export async function createWindow(unit: ShowingUnit, startIso: string, endIso: string): Promise<ShowingWindow> {
+  const token = await getAccessToken();
+  const res = await fetch(`${BASE_URL}/calendars/${encodeURIComponent(CALENDAR_ID_SHOWINGS)}/events`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      summary: `Showing window: ${unit.label}`,
+      description: `Approved applicants can book ${unit.slotMinutes}-minute showings for ${unit.label} during this window.`,
+      start: { dateTime: startIso, timeZone: APP_TZ },
+      end: { dateTime: endIso, timeZone: APP_TZ },
+      transparency: "transparent",
+      extendedProperties: { private: { kind: "window", unit: unit.code } },
+    }),
+  });
+  if (!res.ok) throw new Error(`createWindow failed: ${res.status} ${await res.text()}`);
+  const e = await res.json();
+  return { id: e.id, unit: unit.code, startIso: iso(e.start.dateTime), endIso: iso(e.end.dateTime), fromAdmin: true };
+}
+
+export async function deleteWindow(id: string): Promise<void> {
+  const token = await getAccessToken();
+  const res = await fetch(`${BASE_URL}/calendars/${encodeURIComponent(CALENDAR_ID_SHOWINGS)}/events/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok && res.status !== 410) throw new Error(`deleteWindow failed: ${res.status} ${await res.text()}`);
 }
 
 // Deterministic event id per unit + slot (Google ids allow a-v and 0-9 only).
@@ -58,12 +147,11 @@ export function slotEventId(unit: ShowingUnit, startIso: string): string {
 
 function toBooking(e: any): ShowingBooking {
   const p = e.extendedProperties?.private || {};
-  const tz = (iso: string) => DateTime.fromISO(iso).setZone(APP_TZ).toISO({ suppressMilliseconds: true })!;
   return {
     eventId: e.id,
     unit: p.unit || "",
-    startIso: tz(e.start?.dateTime),
-    endIso: tz(e.end?.dateTime),
+    startIso: iso(e.start?.dateTime),
+    endIso: iso(e.end?.dateTime),
     ref: p.ref || "",
     name: p.name || e.summary || "",
     email: p.email || "",
@@ -73,25 +161,15 @@ function toBooking(e: any): ShowingBooking {
   };
 }
 
-// Bookings for one unit, or every configured unit when omitted
-export async function listShowings(unit?: ShowingUnit): Promise<ShowingBooking[]> {
-  const units = unit ? [unit] : SHOWING_UNITS;
-  const starts = units.flatMap(u => getSlots(u).map(s => s.startIso)).sort();
-  if (starts.length === 0) return [];
-  const token = await getAccessToken();
-  const url = new URL(`${BASE_URL}/calendars/${encodeURIComponent(CALENDAR_ID_SHOWINGS)}/events`);
-  url.searchParams.set("timeMin", DateTime.fromISO(starts[0]).minus({ days: 1 }).toISO()!);
-  url.searchParams.set("timeMax", DateTime.fromISO(starts[starts.length - 1]).plus({ days: 1 }).toISO()!);
-  url.searchParams.set("singleEvents", "true");
-  url.searchParams.set("maxResults", "250");
-  if (unit) url.searchParams.set("privateExtendedProperty", `unit=${unit.code}`);
-  const res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
-  if (!res.ok) throw new Error(`listShowings failed: ${res.status} ${await res.text()}`);
-  const json = await res.json();
-  return (json.items || [])
-    .filter((e: any) => e.status !== "cancelled" && e.start?.dateTime)
+// Bookings (events with a booking reference) for one unit, or all units
+export async function listShowings(unit?: ShowingUnit, opts: { includePast?: boolean } = {}): Promise<ShowingBooking[]> {
+  const from = opts.includePast ? startOfToday().minus({ days: 90 }) : startOfToday();
+  const events = await listEvents(from, startOfToday().plus({ days: 365 }));
+  return events
+    .filter(e => e.extendedProperties?.private?.ref && windowUnitCode(e) === null)
     .map(toBooking)
-    .sort((a: ShowingBooking, b: ShowingBooking) => a.startIso.localeCompare(b.startIso));
+    .filter(b => !unit || b.unit === unit.code)
+    .sort((a, b) => a.startIso.localeCompare(b.startIso));
 }
 
 export class SlotTakenError extends Error {}

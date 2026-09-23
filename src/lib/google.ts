@@ -6,11 +6,11 @@ import { Spot } from "@/lib/types";
 const GOOGLE_SCOPES = ["https://www.googleapis.com/auth/calendar"]; 
 const BASE_URL = "https://www.googleapis.com/calendar/v3";
 
-export async function getAccessToken(): Promise<string> {
+export async function getAccessToken(scopes: string[] = GOOGLE_SCOPES): Promise<string> {
   const client = new JWT({
     email: GOOGLE_CLIENT_EMAIL,
     key: GOOGLE_PRIVATE_KEY,
-    scopes: GOOGLE_SCOPES,
+    scopes,
   });
   const tokenResp = await client.getAccessToken();
   const token = typeof tokenResp === "string" ? tokenResp : tokenResp?.token;

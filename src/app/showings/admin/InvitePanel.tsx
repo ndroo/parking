@@ -2,27 +2,31 @@
 import { useEffect, useState } from "react";
 import { DateTime } from "luxon";
 import { SHOWING_CONTACT, SHOWING_UNITS, ShowingUnit } from "@/lib/showingUnits";
+import type { AdminWindow } from "./WindowsPanel";
+import type { InviteTarget } from "./ApplicationsPanel";
 
 const bookable = SHOWING_UNITS.filter(u => u.bookable);
 
-function windowsText(unit: ShowingUnit) {
-  const t = (d: string, hm: string) => DateTime.fromISO(`${d}T${hm}`).toFormat("h:mma").replace(":00", "").toLowerCase();
-  const parts = unit.windows.map(w => `${DateTime.fromISO(w.date).toFormat("cccc, LLLL d")} (${t(w.date, w.start)}-${t(w.date, w.end)})`);
-  return parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}` : parts[0] || "";
+function windowsText(unit: ShowingUnit, windows: AdminWindow[]) {
+  const t = (iso: string) => DateTime.fromISO(iso).setZone("America/Toronto").toFormat("h:mma").replace(":00", "").toLowerCase();
+  const parts = windows
+    .filter(w => w.unit === unit.code && DateTime.fromISO(w.endIso) > DateTime.now())
+    .map(w => `${DateTime.fromISO(w.startIso).setZone("America/Toronto").toFormat("cccc, LLLL d")} (${t(w.startIso)}-${t(w.endIso)})`);
+  return parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}` : parts[0] || "(no showing windows set yet)";
 }
 
-function defaultMessage(unit: ShowingUnit, name: string) {
+function defaultMessage(unit: ShowingUnit, name: string, windows: AdminWindow[]) {
   const first = name.trim().split(/\s+/)[0] || "there";
   return [
     `Hi ${first},`,
     `Thanks for your application for ${unit.label} at 180 Beatrice. We'd love to show you the place.`,
-    `We're doing showings on ${windowsText(unit)}. Each one is about 15 minutes, one household at a time. Use the button below to pick whatever time suits you.`,
+    `We're doing showings on ${windowsText(unit, windows)}. Each one is about 15 minutes, one household at a time. Use the button below to pick whatever time suits you.`,
     `If you have any questions, feel free to reply here, or you can text or call me at ${SHOWING_CONTACT.phone}.`,
     `Thanks,\n${SHOWING_CONTACT.name}\n${SHOWING_CONTACT.phone}`,
   ].join("\n\n");
 }
 
-export default function InvitePanel({ adminKey }: { adminKey: string }) {
+export default function InvitePanel({ adminKey, windows, target, onSent }: { adminKey: string; windows: AdminWindow[]; target: InviteTarget | null; onSent: () => void }) {
   const [unitSlug, setUnitSlug] = useState(bookable[0]?.slug || "");
   const [f, setF] = useState({ name: "", email: "", phone: "" });
   const [message, setMessage] = useState("");
@@ -31,11 +35,23 @@ export default function InvitePanel({ adminKey }: { adminKey: string }) {
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const unit = bookable.find(u => u.slug === unitSlug);
+  const [row, setRow] = useState<number | null>(null);
+
+  // Prefill from "Approve & invite" on an application
+  useEffect(() => {
+    if (!target) return;
+    setUnitSlug(target.unit);
+    setF({ name: target.name, email: target.email, phone: target.phone });
+    setRow(target.row);
+    setEdited(false);
+    setPreview(null);
+    setStatus("");
+  }, [target]);
 
   // Keep the default message in sync until it's been hand-edited
   useEffect(() => {
-    if (unit && !edited) setMessage(defaultMessage(unit, f.name));
-  }, [unit, f.name, edited]);
+    if (unit && !edited) setMessage(defaultMessage(unit, f.name, windows));
+  }, [unit, f.name, edited, windows]);
 
   const call = async (send: boolean) => {
     setBusy(true);
@@ -44,7 +60,7 @@ export default function InvitePanel({ adminKey }: { adminKey: string }) {
       const res = await fetch("/api/showings/admin/invite", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
-        body: JSON.stringify({ unit: unitSlug, ...f, message, send }),
+        body: JSON.stringify({ unit: unitSlug, ...f, message, send, row }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -53,7 +69,11 @@ export default function InvitePanel({ adminKey }: { adminKey: string }) {
         return;
       }
       setPreview({ html: data.html, subject: data.subject, code: data.code, link: data.link });
-      if (send) setStatus(`Sent to ${f.email}.`);
+      if (send) {
+        setStatus(data.warning || `Sent to ${f.email}.${row ? " Marked Approved in the Sheet." : ""}`);
+        setRow(null);
+        onSent();
+      }
     } finally {
       setBusy(false);
     }
@@ -61,9 +81,9 @@ export default function InvitePanel({ adminKey }: { adminKey: string }) {
 
   if (!bookable.length) return null;
   return (
-    <div className="card mb-4">
+    <div className="card mb-4" id="invite">
       <div className="card-body">
-        <h2 className="h5 mb-1">Invite an applicant</h2>
+        <h2 className="h5 mb-1">Invite an applicant{row ? <span className="badge text-bg-success ms-2 align-middle">From application</span> : null}</h2>
         <p className="text-muted small mb-3">Only people with an invite can book. This sends them a personal booking link and code from your Gmail.</p>
         <div className="row g-2">
           <div className="col-md-3">

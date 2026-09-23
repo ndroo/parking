@@ -1,0 +1,45 @@
+import { NextRequest } from "next/server";
+import { isAdmin } from "@/lib/showings";
+import { getUnit } from "@/lib/showingUnits";
+import { listApplications, setApplicationStatus } from "@/lib/applicationsSheet";
+import { getListing } from "@/lib/listingai";
+import { buildDeclineEmail, send } from "@/lib/notify";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const json = (data: unknown, status = 200) =>
+  new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json" } });
+
+// GET ?unit=unit-3 -> { applications, monthlyRent }
+export async function GET(req: NextRequest) {
+  if (!isAdmin(req.headers.get("x-admin-key"))) return json({ error: "Unauthorized" }, 401);
+  const unit = getUnit(req.nextUrl.searchParams.get("unit") || "");
+  if (!unit?.applicationSheet) return json({ error: "No application sheet for this unit" }, 400);
+  try {
+    const [applications, listing] = await Promise.all([listApplications(unit), getListing(unit.listingId)]);
+    const rent = Number((listing?.price || "").replace(/[^\d.]/g, "")) || null;
+    return json({ applications, monthlyRent: rent });
+  } catch (e: any) {
+    return json({ error: e.message }, 500);
+  }
+}
+
+// POST { unit, row, email, status, sendDecline?, message? }
+export async function POST(req: NextRequest) {
+  if (!isAdmin(req.headers.get("x-admin-key"))) return json({ error: "Unauthorized" }, 401);
+  const { unit: slug, row, email, name, status, sendDecline, message } = await req.json();
+  const unit = getUnit(slug);
+  if (!unit?.applicationSheet) return json({ error: "No application sheet for this unit" }, 400);
+  if (!["New", "Approved", "Declined"].includes(status)) return json({ error: "Bad status" }, 400);
+  try {
+    if (status === "Declined" && sendDecline) {
+      const ok = await send(buildDeclineEmail({ unit, name, email, message }));
+      if (!ok) return json({ error: "The decline email didn't send, so the status wasn't changed." }, 502);
+    }
+    await setApplicationStatus(unit, Number(row), email, status);
+    return json({ ok: true });
+  } catch (e: any) {
+    return json({ error: e.message }, 500);
+  }
+}

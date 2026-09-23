@@ -235,7 +235,10 @@
 /* Day switch */
 .days {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(150px, 1fr);
+  overflow-x: auto;
+  scrollbar-width: none;
   gap: 6px;
   padding: 5px;
   background: var(--surface-2);
@@ -1292,3 +1295,64 @@
 
 .saveText { flex: 1; min-width: 0; }
 .saveBar i { flex: 0 0 auto; }
+
+/* Autosave status pill (sticks to the top right while filling the form) */
+.savePill {
+  position: sticky;
+  top: 10px;
+  z-index: 20;
+  margin: 0 0 10px auto;
+  width: max-content;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 4px 14px rgba(40, 30, 20, 0.08);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.savePill .bi-check2 { color: var(--ok); font-size: 15px; }
+
+.spinner {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.restored {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  border-radius: 14px;
+  background: var(--ok-soft);
+  color: var(--ok);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.restored span { flex: 1 1 220px; }
+.restored .linkBtn { padding: 0; }
+
+.dismiss {
+  border: 0;
+  background: none;
+  color: inherit;
+  padding: 2px;
+  cursor: pointer;
+  opacity: 0.7;
+}
+.restored { position: relative; padding-right: 40px; }
+.restored .dismiss { position: absolute; top: 10px; right: 10px; }

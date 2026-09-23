@@ -33,7 +33,9 @@ export default function ApplyForm({ unit, listing }: Props) {
     consentComms: "", consentCredit: "", pets: "", references: "", insurance: "", parking: "", other: "",
   });
   const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
   const [restored, setRestored] = useState(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [, tick] = useState(0);
   const loaded = useRef(false);
 
@@ -53,15 +55,34 @@ export default function ApplyForm({ unit, listing }: Props) {
     return () => clearInterval(t);
   }, [unit.slug]);
 
-  // Save on every change, once the draft has loaded
+  // Save shortly after typing pauses, once the draft has loaded
   useEffect(() => {
     if (!loaded.current) return;
-    try {
-      const now = Date.now();
-      localStorage.setItem(DRAFT_KEY(unit.slug), JSON.stringify({ form: f, savedAt: now }));
-      setSavedAt(now);
-    } catch {}
+    setSaving(true);
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      try {
+        const now = Date.now();
+        localStorage.setItem(DRAFT_KEY(unit.slug), JSON.stringify({ form: f, savedAt: now }));
+        setSavedAt(now);
+      } catch {}
+      setSaving(false);
+    }, 600);
+    return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
   }, [f, unit.slug]);
+
+  const startOver = () => {
+    if (!confirm("Clear your saved answers and start again?")) return;
+    try { localStorage.removeItem(DRAFT_KEY(unit.slug)); } catch {}
+    loaded.current = false;
+    setF({
+      name: "", email: "", phone: "", occupants: [blankOccupant()], moveIn: "", attracted: "", whyMoving: "",
+      consentComms: "", consentCredit: "", pets: "", references: "", insurance: "", parking: "", other: "",
+    });
+    setSavedAt(null);
+    setRestored(false);
+    setTimeout(() => { loaded.current = true; }, 0);
+  };
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
@@ -69,7 +90,7 @@ export default function ApplyForm({ unit, listing }: Props) {
   const set = (patch: Partial<typeof f>) => setF(prev => ({ ...prev, ...patch }));
   const hasAnswers = !!(f.name || f.email || f.phone || f.attracted || f.occupants.some((o: Occupant) => o.name));
   const ago = savedAt ? Math.round((Date.now() - savedAt) / 1000) : 0;
-  const agoText = ago < 20 ? "just now" : ago < 90 ? "a minute ago" : `${Math.round(ago / 60)} minutes ago`;
+  const agoText = ago < 45 ? "" : ago < 90 ? "1 min ago" : ago < 3600 ? `${Math.round(ago / 60)} min ago` : "earlier";
   const setOcc = (i: number, patch: Partial<Occupant>) => set({ occupants: f.occupants.map((o: Occupant, j: number) => (j === i ? { ...o, ...patch } : o)) });
 
   const submit = async (e: React.FormEvent) => {
@@ -125,13 +146,24 @@ export default function ApplyForm({ unit, listing }: Props) {
           </div>
         </section>
 
-        <div className={s.saveBar} aria-live="polite">
-          {hasAnswers && savedAt ? (
-            <><i className="bi bi-cloud-check"></i> <span className={s.saveText}>{restored ? "Welcome back. " : ""}Application saved on this device <span>· {agoText}</span></span></>
-          ) : (
-            <><i className="bi bi-shield-check"></i> <span className={s.saveText}>Your answers save automatically on this device as you type</span></>
-          )}
+        <div className={s.savePill} aria-live="polite">
+          {!hasAnswers ? (
+            <><i className="bi bi-cloud"></i> Autosaves as you type</>
+          ) : saving ? (
+            <><span className={s.spinner} aria-hidden="true"></span> Saving…</>
+          ) : savedAt ? (
+            <><i className="bi bi-check2"></i> Saved{agoText ? ` ${agoText}` : ""}</>
+          ) : null}
         </div>
+
+        {restored && (
+          <div className={s.restored}>
+            <i className="bi bi-arrow-counterclockwise"></i>
+            <span>We restored your answers from last time. They&apos;re saved on this device only.</span>
+            <button type="button" className={s.linkBtn} onClick={startOver}>Start over</button>
+            <button type="button" className={s.dismiss} onClick={() => setRestored(false)} aria-label="Dismiss"><i className="bi bi-x-lg"></i></button>
+          </div>
+        )}
 
         <div className={s.notice}>
           We pre-screen applicants before in-person viewings, so everyone&apos;s time is well spent. It takes about 5 minutes.

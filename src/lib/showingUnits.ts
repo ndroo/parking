@@ -1,11 +1,5 @@
 // Per-unit showing setup. Safe to import from client components.
-// Add a unit here to open /showings/<slug>; remove its windows to close it.
-
-export interface ShowingWindow {
-  date: string;  // YYYY-MM-DD, America/Toronto
-  start: string; // HH:mm
-  end: string;   // HH:mm, exclusive
-}
+// Add a unit here to open /showings/<slug>. Showing windows live in the showings calendar (see lib/showings.ts).
 
 export type ApplicationField =
   | "name" | "email" | "phone" | "occupants" | "moveIn" | "attracted" | "whyMoving"
@@ -22,8 +16,9 @@ export interface ShowingUnit {
   applyUrl?: string; // where people apply (invites to book are sent after approval)
   // The on-site application posts into this Google Form, so responses keep landing in its Sheet
   applicationForm?: { formId: string; entries: Record<ApplicationField, string> };
+  // The form's responses Sheet (shared with the service account) for the admin review list
+  applicationSheet?: { spreadsheetId: string; sheetName: string };
   slotMinutes: number;
-  windows: ShowingWindow[];
   facts: { icon: string; title: string; body: string }[];
 }
 
@@ -59,7 +54,6 @@ export const SHOWING_UNITS: ShowingUnit[] = [
     listingId: "180-beatrice-st-toronto-on-m6g-3g1-canada-167071",
     bookable: false,
     slotMinutes: 15,
-    windows: [],
     facts: [],
   },
   {
@@ -71,7 +65,6 @@ export const SHOWING_UNITS: ShowingUnit[] = [
     listingId: "180-beatrice-st-toronto-on-m6g-3g1-canada-167072",
     bookable: false,
     slotMinutes: 15,
-    windows: [],
     facts: [],
   },
   {
@@ -83,6 +76,7 @@ export const SHOWING_UNITS: ShowingUnit[] = [
     listingId: "180-beatrice-st-toronto-on-m6g-3g1-canada-167074",
     bookable: true,
     applyUrl: "/apply/unit-3",
+    applicationSheet: { spreadsheetId: "1C6hUYCkBLra0FZeEaUmvmM8Q9CHZFbOo9T3gYwgXRsQ", sheetName: "Form Responses 1" },
     applicationForm: {
       formId: "1FAIpQLSeEz_6SP8wuJ1_ANq_NCQgeffQ18WkADexYPRBTzYh3CD0pOA",
       entries: {
@@ -93,10 +87,6 @@ export const SHOWING_UNITS: ShowingUnit[] = [
       },
     },
     slotMinutes: 15,
-    windows: [
-      { date: "2026-10-02", start: "17:30", end: "20:00" },
-      { date: "2026-10-03", start: "11:00", end: "13:00" },
-    ],
     facts: [
       { icon: "bi-person", title: "One visitor at a time", body: "Each showing is a relaxed 15 minutes with just you (and anyone you'd live with)." },
       { icon: "bi-heart", title: "Bring your pet", body: "If you have a pet, please bring them along. We like to meet pets, as it helps us understand what we might encounter if the unit ever needs maintenance while you're not home." },

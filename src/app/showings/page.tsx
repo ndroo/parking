@@ -2,17 +2,21 @@ import { DateTime } from "luxon";
 import s from "./showings.module.css";
 import { BUILDING_ADDRESS, SHOWING_UNITS } from "@/lib/showingUnits";
 import { getListing } from "@/lib/listingai";
+import { listWindows } from "@/lib/showings";
 
 export const dynamic = "force-dynamic";
 
 export default async function ShowingsIndex() {
   const now = DateTime.now().setZone("America/Toronto");
-  const listings = await Promise.all(SHOWING_UNITS.map(u => getListing(u.listingId)));
-  const units = SHOWING_UNITS.map((u, i) => ({
-    unit: u,
-    listing: listings[i],
-    open: u.bookable && u.windows.some(w => DateTime.fromISO(`${w.date}T${w.end}`, { zone: "America/Toronto" }) > now),
-  })).sort((a, b) => Number(b.open) - Number(a.open));
+  const [listings, windows] = await Promise.all([
+    Promise.all(SHOWING_UNITS.map(u => getListing(u.listingId))),
+    listWindows().catch(() => []),
+  ]);
+  const units = SHOWING_UNITS.map((u, i) => {
+    const upcoming = windows.filter(w => w.unit === u.code && DateTime.fromISO(w.endIso) > now);
+    const days = [...new Set(upcoming.map(w => DateTime.fromISO(w.startIso).setZone("America/Toronto").toFormat("ccc LLL d")))];
+    return { unit: u, listing: listings[i], open: u.bookable && upcoming.length > 0, days };
+  }).sort((a, b) => Number(b.open) - Number(a.open));
 
   return (
     <div className={s.page}>
@@ -24,7 +28,7 @@ export default async function ShowingsIndex() {
         </section>
 
         <div className={s.stack}>
-          {units.map(({ unit: u, listing: l, open }) => (
+          {units.map(({ unit: u, listing: l, open, days }) => (
             <a key={u.slug} href={`/showings/${u.slug}`} className={`${s.section} ${s.unitCard} ${open ? "" : s.unitCardClosed}`}>
               {l?.photos[0] && (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -43,7 +47,7 @@ export default async function ShowingsIndex() {
                 </p>
                 <p className={s.sub}>
                   {open
-                    ? u.windows.map(w => DateTime.fromISO(w.date).toFormat("ccc LLL d")).join(" · ")
+                    ? days.join(" · ")
                     : l?.headline || u.blurb}
                 </p>
               </div>

@@ -5,6 +5,7 @@ import { inviteCode, inviteLink } from "@/lib/invites";
 import { getListing } from "@/lib/listingai";
 import { buildInviteEmail, send } from "@/lib/notify";
 import { renderEmail } from "@/lib/emailTemplate";
+import { setApplicationStatus } from "@/lib/applicationsSheet";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,7 +16,7 @@ const json = (data: unknown, status = 200) =>
 // POST { unit, name, email, phone, message, send } -> { code, link, subject, html, sent }
 export async function POST(req: NextRequest) {
   if (!isAdmin(req.headers.get("x-admin-key"))) return json({ error: "Unauthorized" }, 401);
-  const { unit: slug, name, email, phone, message, send: doSend } = await req.json();
+  const { unit: slug, name, email, phone, message, send: doSend, row } = await req.json();
   const unit = getUnit(slug);
   if (!unit) return json({ error: "Unknown unit" }, 400);
   const cleanEmail = String(email || "").trim().toLowerCase();
@@ -32,6 +33,11 @@ export async function POST(req: NextRequest) {
   if (doSend) {
     sent = await send(mail);
     if (!sent) return json({ error: "The email didn't send. Check GMAIL_APP_PASSWORD, or copy the link and send it yourself.", code, link }, 502);
+    // Invited from an application: mark it Approved in the Sheet
+    if (row && unit.applicationSheet) {
+      try { await setApplicationStatus(unit, Number(row), cleanEmail, "Approved"); }
+      catch (e: any) { return json({ code, link, subject: mail.subject, html, sent, warning: `Invite sent, but the Sheet wasn't updated: ${e.message}` }); }
+    }
   }
   return json({ code, link, subject: mail.subject, html, sent });
 }

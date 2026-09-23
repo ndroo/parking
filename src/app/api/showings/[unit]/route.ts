@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { DateTime } from "luxon";
-import { createShowing, findSlot, getSlots, listShowings, SlotTakenError } from "@/lib/showings";
+import { createShowing, findSlot, listShowings, listWindows, slotsFromWindows, SlotTakenError } from "@/lib/showings";
 import { getUnit } from "@/lib/showingUnits";
 import { notifyShowing } from "@/lib/notify";
 import { resolveInvite } from "@/lib/invites";
@@ -18,10 +18,10 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
   const unit = getUnit((await params).unit);
   if (!unit) return json({ error: "Unknown unit" }, 404);
   try {
-    const bookings = await listShowings(unit);
+    const [bookings, windows] = await Promise.all([listShowings(unit), listWindows(unit)]);
     const taken = new Set(bookings.map(b => DateTime.fromISO(b.startIso).toMillis()));
     const now = DateTime.now();
-    const slots = getSlots(unit).map(s => ({
+    const slots = slotsFromWindows(unit, windows).map(s => ({
       ...s,
       taken: taken.has(DateTime.fromISO(s.startIso).toMillis()),
       past: DateTime.fromISO(s.startIso) <= now,
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest, { params }: Ctx) {
     if (!inv) return json({ error: "Showings are by invitation. Please use the link or code from your approval email." }, 403);
     if (inv.email !== cleanEmail) return json({ error: `Please book with the email your invite was sent to (${inv.email}).` }, 403);
 
-    const slot = findSlot(unit, startIso);
+    const slot = await findSlot(unit, startIso);
     if (!slot) return json({ error: "That isn't one of the showing times" }, 400);
     if (DateTime.fromISO(slot.startIso) <= DateTime.now()) return json({ error: "That time has passed" }, 400);
 

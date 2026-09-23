@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { DateTime } from "luxon";
 import { getUnitByCode } from "@/lib/showingUnits";
 import InvitePanel from "./InvitePanel";
+import WindowsPanel, { AdminWindow } from "./WindowsPanel";
+import ApplicationsPanel, { InviteTarget } from "./ApplicationsPanel";
 
 const TZ = "America/Toronto";
 const KEY_STORAGE = "showingsAdminKey";
@@ -24,6 +26,9 @@ export default function ShowingsAdmin() {
   const [authed, setAuthed] = useState(false);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [error, setError] = useState("");
+  const [windows, setWindows] = useState<AdminWindow[]>([]);
+  const [target, setTarget] = useState<InviteTarget | null>(null);
+  const [appsRefresh, setAppsRefresh] = useState(0);
 
   const load = async (k: string) => {
     const res = await fetch("/api/showings/admin", { headers: { "x-admin-key": k }, cache: "no-store" });
@@ -67,8 +72,16 @@ export default function ShowingsAdmin() {
 
   let lastDay = "";
   return (
-    <div className="container py-4">
-      <InvitePanel adminKey={key} />
+    <div className="parking-theme"><div className="pk-container py-4">
+      <nav className="d-flex gap-2 flex-wrap mb-3">
+        {[["applications", "Applications"], ["invite", "Invite"], ["windows", "Showing windows"], ["bookings", "Bookings"]].map(([id, label]) => (
+          <a key={id} className="btn btn-sm btn-outline-secondary" href={`#${id}`}>{label}</a>
+        ))}
+      </nav>
+      <ApplicationsPanel adminKey={key} refreshKey={appsRefresh} onInvite={t => { setTarget({ ...t }); setTimeout(() => document.getElementById("invite")?.scrollIntoView({ behavior: "smooth" }), 50); }} />
+      <InvitePanel adminKey={key} windows={windows} target={target} onSent={() => { setAppsRefresh(n => n + 1); load(key); }} />
+      <div id="windows"><WindowsPanel adminKey={key} onChange={setWindows} /></div>
+      <div id="bookings"></div>
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h1 className="h4 mb-0">Showings ({bookings.length})</h1>
         <button className="btn btn-sm btn-outline-secondary" onClick={() => load(key)}><i className="bi bi-arrow-clockwise"></i> Refresh</button>
@@ -101,6 +114,6 @@ export default function ShowingsAdmin() {
           </tbody>
         </table>
       </div>
-    </div>
+    </div></div>
   );
 }

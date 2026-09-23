@@ -43,7 +43,7 @@ export async function POST(req: NextRequest, { params }: Ctx) {
 
     if (action === "reschedule") {
       if (!unit.bookable) return json({ error: `${unit.label} isn't taking showings right now` }, 403);
-      const slot = findSlot(unit, startIso);
+      const slot = await findSlot(unit, startIso);
       if (!slot) return json({ error: "That isn't one of the showing times" }, 400);
       if (DateTime.fromISO(slot.startIso) <= DateTime.now()) return json({ error: "That time has passed" }, 400);
       if (DateTime.fromISO(slot.startIso).toMillis() === DateTime.fromISO(booking.startIso).toMillis()) {

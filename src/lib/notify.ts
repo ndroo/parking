@@ -238,6 +238,31 @@ export async function notifyApplication(unit: ShowingUnit, a: Application, occup
   return ownerSent;
 }
 
+// Short, kind decline sent from the admin page (no reason given)
+export function declineMessage(unit: ShowingUnit, name: string) {
+  const first = name.trim().split(/\s+/)[0] || "there";
+  return [
+    `Hi ${first},`,
+    `Thanks for taking the time to apply for ${unit.label} at 180 Beatrice. We've had a lot of interest, and after reviewing applications we won't be moving forward with yours this time.`,
+    `We really appreciate your interest, and wish you the best of luck with your search.`,
+    `Thanks,\n${SHOWING_CONTACT.name}\n${SHOWING_CONTACT.phone}`,
+  ].join("\n\n");
+}
+
+export function buildDeclineEmail(p: { unit: ShowingUnit; name: string; email: string; message?: string }): OutgoingEmail {
+  return {
+    to: p.email,
+    fromName: "Andrew McGrath",
+    subject: `Your application for ${p.unit.label}, 180 Beatrice`,
+    content: {
+      preheader: `An update on your application for ${p.unit.label}.`,
+      title: `An update on your application`,
+      paragraphs: (p.message || declineMessage(p.unit, p.name)).split(/\n\s*\n/).map(t => t.trim()).filter(Boolean),
+      footer: `180 Beatrice St, Toronto`,
+    },
+  };
+}
+
 export interface ParkingInfo {
   spot: string; ref: string; name: string; email: string; phone: string; plate: string;
   startIso: string; endIso: string; price: string; manageUrl: string;
