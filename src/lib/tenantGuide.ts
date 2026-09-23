@@ -49,12 +49,13 @@ export const GUIDE = {
     included: ["Heat", "Water (see below)"],
     notIncluded: [{ name: "Hydro", note: "Each unit has its own meter, typically $50-125/month depending on usage." }],
     water: {
-      summary: "Water is included in your rent. Once a year we review how many people live in each unit. Units with above-average occupancy for the building pay a prorated share of the water bill, calculated each quarter when the bill arrives.",
-      formula: "Your share = Quarterly bill × (Your unit's occupants − Building average) ÷ Total occupants in the building",
+      included: 2,
+      summary: "Water is included in your rent for up to 2 people per unit. Once a year we review how many people live in each unit. For each person above 2, the unit pays that person's share of the building's water bill, calculated each quarter when the bill arrives. Units with fewer than 2 people don't get a credit.",
+      formula: "Your share = Quarterly bill × (Your unit's occupants − 2) ÷ Total occupants in the building",
       example: {
         bill: 420,
         occupants: [2, 2, 3],
-        note: "If every unit has the same number of people, nobody pays anything extra. Figures are illustrative; actual bills vary by season and usage.",
+        note: "If every unit has 2 or fewer people, nobody pays anything extra. Figures are illustrative; actual bills vary by season and usage.",
       },
     },
   },

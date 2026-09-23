@@ -114,7 +114,7 @@ export default async function GuidePage() {
           <h3 className={g.h3}>How water works</h3>
           <p className={g.p}>{GUIDE.utilities.water.summary}</p>
           <div className={g.formula}>{GUIDE.utilities.water.formula}</div>
-          <WaterCalculator initialBill={GUIDE.utilities.water.example.bill} initialOccupants={GUIDE.utilities.water.example.occupants} />
+          <WaterCalculator initialBill={GUIDE.utilities.water.example.bill} initialOccupants={GUIDE.utilities.water.example.occupants} included={GUIDE.utilities.water.included} />
           <p className={g.small}>{GUIDE.utilities.water.example.note}</p>
         </section>
 

@@ -3,22 +3,22 @@ import { useState } from "react";
 import g from "./guide.module.css";
 
 const money = (n: number) => n.toLocaleString("en-CA", { style: "currency", currency: "CAD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const fmt = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2));
 
 // Interactive version of the water proration example in the guide
-export default function WaterCalculator({ initialBill, initialOccupants }: { initialBill: number; initialOccupants: number[] }) {
+export default function WaterCalculator({ initialBill, initialOccupants, included }: { initialBill: number; initialOccupants: number[]; included: number }) {
   const [bill, setBill] = useState(String(initialBill));
   const [people, setPeople] = useState(initialOccupants.map(String));
 
   const billNum = Math.max(0, Number(bill) || 0);
   const counts = people.map(p => Math.max(0, Math.floor(Number(p) || 0)));
   const total = counts.reduce((a, b) => a + b, 0);
-  const avg = counts.length ? total / counts.length : 0;
+  // Each person above the included allowance pays their per-person share; no credits below it
   const rows = counts.map(n => {
-    const above = n - avg;
-    const charge = total > 0 && above > 1e-9 ? (billNum * above) / total : 0;
+    const above = Math.max(0, n - included);
+    const charge = total > 0 ? (billNum * above) / total : 0;
     return { n, above, charge };
   });
+  const charged = rows.reduce((a, r) => a + r.charge, 0);
   const changed = billNum !== initialBill || counts.some((c, i) => c !== initialOccupants[i]);
 
   return (
@@ -54,7 +54,7 @@ export default function WaterCalculator({ initialBill, initialOccupants }: { ini
       </div>
 
       <p className={g.calcSummary}>
-        {total} {total === 1 ? "person" : "people"} in the building, an average of <b>{fmt(Math.round(avg * 100) / 100)}</b> per unit.
+        {total} {total === 1 ? "person" : "people"} in the building. Water is included for {included} per unit, and we cover <b>{money(Math.max(0, billNum - charged))}</b> of this bill.
       </p>
 
       <table className={g.calcTable}>
@@ -63,7 +63,7 @@ export default function WaterCalculator({ initialBill, initialOccupants }: { ini
           {rows.map((r, i) => (
             <tr key={i}>
               <td>Unit {i + 1} ({r.n})</td>
-              <td>{r.charge > 0 ? `${money(billNum)} × (${r.n} − ${fmt(Math.round(avg * 100) / 100)}) ÷ ${total}` : "At or below average"}</td>
+              <td>{r.charge > 0 ? `${money(billNum)} × (${r.n} − ${included}) ÷ ${total}` : `${included} or fewer people`}</td>
               <td><b>{r.charge > 0 ? `${money(r.charge)}/qtr` : "$0"}</b></td>
             </tr>
           ))}
