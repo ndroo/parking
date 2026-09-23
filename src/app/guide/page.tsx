@@ -18,6 +18,7 @@ const SECTIONS = [
   { id: "history", label: "History" },
   { id: "reno-2018", label: "2018-19 renovation" },
   { id: "reno-2022", label: "2022-23 basement" },
+  { id: "kitchens-2025", label: "2025 kitchens" },
 ];
 
 function Photos({ photos }: { photos: GuideItem["photos"] }) {
@@ -157,6 +158,13 @@ export default async function GuidePage() {
           <h2 className={g.h2}>Creating the basement unit</h2>
           <p className={g.p}>{GUIDE.reno2022.lede}</p>
           <Timeline items={GUIDE.reno2022.items} />
+        </section>
+
+        <section id="kitchens-2025" className={`${s.section} ${g.block}`}>
+          <span className={g.kicker}>2025</span>
+          <h2 className={g.h2}>Kitchen upgrades in Units 1 and 2</h2>
+          <p className={g.p}>{GUIDE.kitchens2025.lede}</p>
+          <Timeline items={GUIDE.kitchens2025.items} />
         </section>
 
         <div className={`${s.section} ${s.contactCard}`}>

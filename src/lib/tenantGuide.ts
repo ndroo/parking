@@ -5,6 +5,7 @@ export interface GuidePhoto { src: string; alt: string }
 export interface GuideItem { title: string; body?: string; photos?: GuidePhoto[] }
 
 const p = (n: number, alt: string): GuidePhoto => ({ src: `/guide/image${n}.jpg`, alt });
+const k = (file: string, alt: string): GuidePhoto => ({ src: `/guide/${file}.jpg`, alt });
 
 export const GUIDE = {
   intro:
@@ -13,7 +14,7 @@ export const GUIDE = {
   facts: [
     { label: "Built", value: "1904" },
     { label: "Units", value: "3" },
-    { label: "Renovated", value: "2018 & 2022" },
+    { label: "Renovated", value: "2018, 2022, 2025" },
     { label: "Rent controlled", value: "Yes" },
     { label: "Hydro (metered)", value: "$50-125/mo" },
   ],
@@ -92,12 +93,28 @@ export const GUIDE = {
       { title: "Underpinned the basement", body: "The foundation was shored up by an additional 24 inches, with a 26 inch wide footing across all existing walls.", photos: [p(13, "Underpinning the basement"), p(12, "New footings")] },
       { title: "New windows and doors", body: "All interior and exterior windows and doors replaced, and a lot of decaying brick repaired.", photos: [p(37, "New bay window"), p(19, "New rear window")] },
       { title: "Restored radiators with thermostatic valves", body: "Every radiator was drained, cleaned and repainted, with thermostatic valves so you can set each room's temperature. Each unit also has its own smart thermostat and heating zone, so your neighbour doesn't control your heat!", photos: [p(26, "Radiator before"), p(32, "Radiator after"), p(5, "Thermostatic valve")] },
-      { title: "New kitchens and fresh paint", body: "Units 2 and 3 got completely new kitchens, and Unit 1's kitchen and appliances are being fully replaced as of 2025.", photos: [p(27, "Kitchen being installed"), p(18, "Finished kitchen"), p(2, "Freshly painted room")] },
+      { title: "New kitchens and fresh paint", body: "Units 2 and 3 got completely new kitchens. We re-used parts of Unit 1's kitchen at the time, and fully replaced it in 2025 (see below).", photos: [p(27, "Kitchen being installed"), p(18, "Finished kitchen"), p(2, "Freshly painted room")] },
       { title: "In-floor heating and waterproofing (basement)", body: "New drains, a backflow prevention valve and waterproofing keep the basement dry and comfortable.", photos: [p(4, "Pouring the heated floor")] },
       { title: "New basement walkout", body: "The old one was caving in.", photos: [p(28, "Rebuilding the walkout")] },
       { title: "Landscaped front yard", photos: [p(36, "Front yard before"), p(16, "Front yard after")] },
       { title: "Refinished back of the house", photos: [p(30, "Back of the house during work"), p(20, "Finished backyard")] },
       { title: "Resurfaced rear parking (July 2020)", body: "With the fancy new mural! Thanks to our buddy @mostlyletters.", photos: [p(11, "Preparing the parking pad"), p(10, "Fresh parking surface"), p(34, "Parking with the mural")] },
+    ] as GuideItem[],
+  },
+
+  kitchens2025: {
+    lede: "In 2025 we upgraded the kitchens in Units 1 and 2 at the same time. For both we chose a grey stone countertop: it's durable, better for tenants day to day, and easier for us to maintain over the long run.",
+    items: [
+      {
+        title: "Unit 1: full kitchen replacement",
+        body: "The last kitchen still carrying parts from before 2018 was fully replaced: new cabinets, appliances, backsplash and grey stone countertops, plus an island.",
+        photos: [k("kitchen-u1-1", "Unit 1 kitchen before"), k("kitchen-u1-3", "New cabinets going in"), k("kitchen-u1-6", "Countertops being installed"), k("kitchen-u1-7", "Finished Unit 1 kitchen"), k("kitchen-u1-9", "New range and backsplash"), k("kitchen-u1-8", "Island looking into the living room")],
+      },
+      {
+        title: "Unit 2: new countertops",
+        body: "The cabinets from 2018 were still in great shape, but the wooden IKEA countertop didn't hold up well, so we replaced it with the same grey stone.",
+        photos: [k("kitchen-u2-1", "Old countertop removed"), k("kitchen-u2-2", "Finished Unit 2 kitchen"), k("kitchen-u2-3", "Unit 2 kitchen and living area"), k("kitchen-u2-4", "New grey stone countertops")],
+      },
     ] as GuideItem[],
   },
 
