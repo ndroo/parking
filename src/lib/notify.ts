@@ -73,7 +73,7 @@ export function buildShowingEmails(kind: ShowingEvent, b: ShowingInfo, photoUrl?
       photoUrl,
       badge: { text: "Showing confirmed", tone: "ok" },
       title: `You're booked, ${first}.`,
-      intro: `Looking forward to meeting you. Here are your showing details; keep this email handy.`,
+      intro: `Thanks for booking a time to see ${b.unit.label}. Here are the details for your records.`,
       when,
       refCode: b.ref,
       buttons: [
@@ -86,7 +86,7 @@ export function buildShowingEmails(kind: ShowingEvent, b: ShowingInfo, photoUrl?
         button: { label: "Read the tenant guide", href: new URL(TENANT_GUIDE.url, b.manageUrl).toString() },
       },
       notes: { title: "A few reminders", items: reminders },
-      contact: contactBlock(`Can't make it or running late? Please let ${SHOWING_CONTACT.name} know as early as you can so someone else can take your spot.`),
+      contact: contactBlock(`If you have any questions, or need to move your time, feel free to reply to this email, or you can text or call me.`),
       footer: FOOTER,
     },
     moved: {
@@ -94,11 +94,11 @@ export function buildShowingEmails(kind: ShowingEvent, b: ShowingInfo, photoUrl?
       photoUrl,
       badge: { text: "Time changed", tone: "accent" },
       title: `Your showing has moved, ${first}.`,
-      intro: `No problem. Your new time is below and your reference code stays the same.`,
+      intro: `Your new time is below, and your reference code stays the same.`,
       when: { ...when, struck: previousStartIso ? `${longDay(previousStartIso)}, ${time(previousStartIso)}` : undefined },
       refCode: b.ref,
       buttons: [{ label: "Manage my booking", href: b.manageUrl, primary: true }],
-      contact: contactBlock(`Questions? Reach ${SHOWING_CONTACT.name} any time.`),
+      contact: contactBlock(`If you have any questions, feel free to reply to this email, or you can text or call me.`),
       footer: FOOTER,
     },
     cancelled: {
@@ -110,7 +110,7 @@ export function buildShowingEmails(kind: ShowingEvent, b: ShowingInfo, photoUrl?
         { label: "Book another time", href: b.manageUrl, primary: true },
         { label: "View the listing", href: b.unit.listingUrl },
       ],
-      contact: contactBlock(`Questions? Reach ${SHOWING_CONTACT.name} any time.`),
+      contact: contactBlock(`If you have any questions, feel free to reply to this email, or you can text or call me.`),
       footer: FOOTER,
     },
   };

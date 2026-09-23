@@ -82,11 +82,11 @@ export const SHOWING_UNITS: ShowingUnit[] = [
     ],
     facts: [
       { icon: "bi-person", title: "One visitor at a time", body: "Each showing is a relaxed 15 minutes with just you (and anyone you'd live with)." },
-      { icon: "bi-heart", title: "Bring your pet", body: "If you have a pet, please bring them along. We'd love to meet them." },
+      { icon: "bi-heart", title: "Bring your pet", body: "If you have a pet, please bring them along. We like to meet pets, as it helps us understand what we might encounter if the unit ever needs maintenance while you're not home." },
       {
         icon: "bi-tools",
-        title: "Mechanical room access",
-        body: "The building's boiler and water shut-offs are reached through this unit. We need in about once a year (arranged ahead), and occasionally on short notice in an emergency.",
+        title: "Building access",
+        body: "Some of the building's systems are reached through the units (for this one, the boiler and water shut-offs in the basement), so we'll occasionally need access for servicing. We always give notice, other than in an emergency.",
       },
     ],
   },
