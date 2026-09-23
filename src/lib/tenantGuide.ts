@@ -94,7 +94,7 @@ export const GUIDE = {
 
   faq: [
     { q: "How many units are in the house?", a: "3." },
-    { q: "Who else lives in the house?", a: "There's a group of 3 in Unit 1 (the second and third floors), and on the main floor there are two sisters." },
+    { q: "Who else lives in the house?", a: "We try to curate a household of people who can live comfortably in the same building without interrupting each other. Everyone has their own space, and we look for tenants who'll be considerate neighbours." },
     { q: "Can I use the front porch?", a: "Only Unit 1 uses this area, for bike storage." },
     { q: "Is parking available?", a: "Parking can optionally be added (pending availability) for an additional monthly fee, either with your lease or through our parking booking page. There's bike parking at the back for Units 2 and 3, and on the front porch for Unit 1. Tenants may only use the parking allocated in their lease, and unrecognized plates will be towed." },
     { q: "Are animals allowed?", a: "If it's a legal animal for you to have as a pet, yes. Please be extremely upfront about pets. I love dogs (my Beagle Elvis is my best friend), so I get it! But pets can cause damage, disrupt other tenants and, worst of all, be aggressive during maintenance or inspections. My goal is that you, the other tenants, anyone who works on the property and I are all safe and happy on site." },
