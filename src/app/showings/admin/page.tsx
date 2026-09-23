@@ -6,6 +6,7 @@ import InvitePanel from "./InvitePanel";
 import WindowsPanel, { AdminWindow } from "./WindowsPanel";
 import ApplicationsPanel, { InviteTarget } from "./ApplicationsPanel";
 import InviteModal from "./InviteModal";
+import ApplicantModal from "./ApplicantModal";
 
 const TZ = "America/Toronto";
 const KEY_STORAGE = "showingsAdminKey";
@@ -30,6 +31,7 @@ export default function ShowingsAdmin() {
   const [windows, setWindows] = useState<AdminWindow[]>([]);
   const [target, setTarget] = useState<InviteTarget | null>(null);
   const [appsRefresh, setAppsRefresh] = useState(0);
+  const [person, setPerson] = useState<Booking | null>(null);
 
   const load = async (k: string) => {
     const res = await fetch("/api/showings/admin", { headers: { "x-admin-key": k }, cache: "no-store" });
@@ -71,7 +73,6 @@ export default function ShowingsAdmin() {
     );
   }
 
-  let lastDay = "";
   return (
     <div className="parking-theme"><div className="pk-container py-4">
       <nav className="d-flex gap-2 flex-wrap mb-3">
@@ -97,25 +98,26 @@ export default function ShowingsAdmin() {
           <tbody>
             {bookings.map(b => {
               const t = DateTime.fromISO(b.startIso).setZone(TZ);
-              const day = t.toFormat("ccc LLL d");
-              const showDay = day !== lastDay;
-              lastDay = day;
               return (
                 <tr key={b.eventId}>
-                  <td className="text-nowrap">{showDay ? <b>{day} </b> : null}{t.toFormat("h:mm a")}</td>
+                  <td className="text-nowrap"><b>{t.toFormat("ccc LLL d")}</b> {t.toFormat("h:mm a")}</td>
                   <td className="text-nowrap">{getUnitByCode(b.unit)?.label || b.unit}</td>
-                  <td>{b.name}</td>
+                  <td><button className="btn btn-link p-0 text-start" onClick={() => setPerson(b)}>{b.name}</button></td>
                   <td className="text-nowrap"><a className="text-primary" href={`tel:${b.phone}`}>{b.phone}</a></td>
                   <td><a className="text-primary" href={`mailto:${b.email}`}>{b.email}</a></td>
                   <td>{b.pet || <span className="text-muted">-</span>}</td>
                   <td className="font-monospace small">{b.ref}</td>
-                  <td><button className="btn btn-sm btn-outline-danger" onClick={() => cancel(b)}>Cancel</button></td>
+                  <td className="text-nowrap">
+                    <button className="btn btn-sm btn-outline-secondary me-2" onClick={() => setPerson(b)}>Details</button>
+                    <button className="btn btn-sm btn-outline-danger" onClick={() => cancel(b)}>Cancel</button>
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
+      {person && <ApplicantModal adminKey={key} unitCode={person.unit} email={person.email} name={person.name} bookings={bookings} onClose={() => setPerson(null)} />}
     </div></div>
   );
 }

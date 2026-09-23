@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { DateTime } from "luxon";
 import { SHOWING_UNITS } from "@/lib/showingUnits";
 import PreviewFrame from "./PreviewFrame";
+import ApplicantModal, { ModalBooking } from "./ApplicantModal";
 
 export interface AdminApplication {
   row: number; submittedAt: string; name: string; email: string; phone: string; occupants: string; moveIn: string;
@@ -29,7 +30,7 @@ function declineText(stage: "Declined" | "Not selected", unitLabel: string, name
   return `Hi ${first},\n\n${body}\n\nThanks,\nAndrew\n${phone}`;
 }
 
-export interface PanelBooking { unit: string; startIso: string; email: string }
+export type PanelBooking = ModalBooking;
 
 export default function ApplicationsPanel({ adminKey, refreshKey, onInvite, bookings, onBookingsChanged }: {
   adminKey: string; refreshKey: number; onInvite: (t: InviteTarget) => void; bookings: PanelBooking[]; onBookingsChanged: () => void;
@@ -119,7 +120,6 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite, book
         <div className="d-grid gap-2">
           {shown.map(a => {
             const ratio = a.detectedIncome && rent ? a.detectedIncome / (rent * 12) : null;
-            const isOpen = open === a.row;
             const parking = /parking/i.test(a.other);
             return (
               <div key={a.row} className="card">
@@ -139,7 +139,7 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite, book
                       <div className="small text-muted">Applied {a.submittedAt}{a.statusUpdated ? ` · ${a.status} ${a.statusUpdated}` : ""}</div>
                     </div>
                     <div className="app-actions">
-                      <button className="btn btn-sm btn-outline-secondary" onClick={() => setOpen(isOpen ? null : a.row)}>{isOpen ? "Hide" : "Details"}</button>
+                      <button className="btn btn-sm btn-outline-secondary" onClick={() => setOpen(a.row)}>Details</button>
                       {a.status === "New" && (
                         <>
                           <button className="btn btn-sm btn-success" onClick={() => onInvite({ unit: unitSlug, name: a.name, email: a.email, phone: a.phone, row: a.row })}>Invite to showing</button>
@@ -160,26 +160,17 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite, book
                       )}
                     </div>
                   </div>
-                  {isOpen && (
-                    <dl className="row small mt-3 mb-0">
-                      {([
-                        ["Email", a.email], ["Phone", a.phone], ["Occupants", a.occupants], ["Attracted by", a.attracted], ["Why moving", a.whyMoving],
-                        ["Pets", a.pets], ["References", a.references], ["Credit check", a.consentCredit], ["Email notices", a.consentComms],
-                        ["Insurance", a.insurance], ["Other", a.other],
-                      ] as [string, string][]).filter(([, v]) => v).map(([k, v]) => (
-                        <div key={k} style={{ display: "contents" }}>
-                          <dt className="col-sm-3 text-muted fw-semibold">{k}</dt>
-                          <dd className="col-sm-9" style={{ whiteSpace: "pre-wrap" }}>{v}</dd>
-                        </div>
-                      ))}
-                    </dl>
-                  )}
                 </div>
               </div>
             );
           })}
         </div>
       </div>
+
+      {open !== null && apps?.find(x => x.row === open) && (() => {
+        const a = apps.find(x => x.row === open)!;
+        return <ApplicantModal adminKey={adminKey} unitCode={unit?.code || ""} email={a.email} name={a.name} application={a} bookings={bookings} onClose={() => setOpen(null)} />;
+      })()}
 
       {decline && (
         <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
