@@ -1,0 +1,176 @@
+import type { Metadata } from "next";
+import s from "../showings/showings.module.css";
+import g from "./guide.module.css";
+import { GUIDE, GuideItem } from "@/lib/tenantGuide";
+import { getListing } from "@/lib/listingai";
+import { SHOWING_CONTACT, SHOWING_UNITS } from "@/lib/showingUnits";
+
+export const metadata: Metadata = {
+  title: "Tenant guide - 180 Beatrice",
+  description: "The history of 180 Beatrice, its renovations, what we look for in a tenant, and answers to common questions.",
+};
+
+const SECTIONS = [
+  { id: "selected", label: "Getting selected" },
+  { id: "ideal", label: "Our ideal tenant" },
+  { id: "faq", label: "FAQ" },
+  { id: "about", label: "About us" },
+  { id: "history", label: "History" },
+  { id: "reno-2018", label: "2018-19 renovation" },
+  { id: "reno-2022", label: "2022-23 basement" },
+];
+
+function Photos({ photos }: { photos: GuideItem["photos"] }) {
+  if (!photos?.length) return null;
+  return (
+    <div className={`${g.photos} ${photos.length === 1 ? g.photosOne : ""}`}>
+      {photos.map(ph => (
+        <a key={ph.src} href={ph.src} target="_blank" rel="noopener noreferrer" className={g.photo}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={ph.src} alt={ph.alt} loading="lazy" />
+          <span>{ph.alt}</span>
+        </a>
+      ))}
+    </div>
+  );
+}
+
+function Timeline({ items }: { items: GuideItem[] }) {
+  return (
+    <ol className={g.timeline}>
+      {items.map(it => (
+        <li key={it.title}>
+          <h3>{it.title}</h3>
+          {it.body && <p>{it.body}</p>}
+          <Photos photos={it.photos} />
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+export default async function GuidePage() {
+  // Exterior photo from the Unit 1 listing on ListingAI (stays current)
+  const exterior = (await getListing(SHOWING_UNITS[0].listingId))?.photos[0]?.url;
+
+  return (
+    <div className={s.page}>
+      <div className={s.wrap}>
+        <section className={g.hero}>
+          {exterior && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img className={g.heroImg} src={exterior} alt="180 Beatrice St" />
+          )}
+          <div className={g.heroBody}>
+            <span className={s.eyebrow}><i className="bi bi-book"></i> Tenant guide</span>
+            <h1 className={s.title}>Welcome to 180 Beatrice.</h1>
+            <p className={s.lede}>{GUIDE.intro}</p>
+            <dl className={g.facts}>
+              {GUIDE.facts.map(f => (
+                <div key={f.label}><dt>{f.label}</dt><dd>{f.value}</dd></div>
+              ))}
+            </dl>
+          </div>
+        </section>
+
+        <nav className={g.toc} aria-label="Guide sections">
+          {SECTIONS.map(x => <a key={x.id} href={`#${x.id}`}>{x.label}</a>)}
+        </nav>
+
+        <section id="selected" className={`${s.section} ${g.block}`}>
+          <span className={g.kicker}>For applicants</span>
+          <h2 className={g.h2}>How to become the selected tenant</h2>
+          <p className={g.p}>{GUIDE.selected.lede}</p>
+          <ol className={g.steps}>
+            {GUIDE.selected.steps.map((st, i) => (
+              <li key={st.title}>
+                <span className={g.stepNum}>{i + 1}</span>
+                <div><b>{st.title}</b><p>{st.body}</p></div>
+              </li>
+            ))}
+          </ol>
+          <a className={`${s.btn} ${s.btnPrimary}`} href="/showings">See units and book a showing <i className="bi bi-arrow-right"></i></a>
+        </section>
+
+        <section id="ideal" className={`${s.section} ${g.block}`}>
+          <span className={g.kicker}>What matters to us</span>
+          <h2 className={g.h2}>Our ideal tenant</h2>
+          {GUIDE.ideal.lede.map(t => <p key={t} className={g.p}>{t}</p>)}
+          <div className={g.points}>
+            {GUIDE.ideal.points.map(pt => (
+              <div key={pt.title} className={g.point}>
+                <i className="bi bi-check2-circle"></i>
+                <div><b>{pt.title}</b><p>{pt.body}</p></div>
+              </div>
+            ))}
+          </div>
+          <p className={g.small}>
+            Rent increase guidelines: <a href={GUIDE.ideal.guidelineUrl} target="_blank" rel="noopener noreferrer">ontario.ca/page/residential-rent-increases</a>
+          </p>
+        </section>
+
+        <section id="faq" className={`${s.section} ${g.block}`}>
+          <span className={g.kicker}>Questions</span>
+          <h2 className={g.h2}>FAQ</h2>
+          <div className={g.faq}>
+            {GUIDE.faq.map(f => (
+              <details key={f.q}>
+                <summary>{f.q}<i className="bi bi-chevron-down"></i></summary>
+                <p>{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+
+        <section id="about" className={`${s.section} ${g.block}`}>
+          <span className={g.kicker}>Your landlords</span>
+          <h2 className={g.h2}>About us</h2>
+          <div className={g.about}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={GUIDE.about.photo.src} alt={GUIDE.about.photo.alt} loading="lazy" />
+            <div>{GUIDE.about.paragraphs.map(t => <p key={t} className={g.p}>{t}</p>)}</div>
+          </div>
+        </section>
+
+        <section id="history" className={`${s.section} ${g.block}`}>
+          <span className={g.kicker}>Since 1904</span>
+          <h2 className={g.h2}>History of the house</h2>
+          <div className={g.about}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={GUIDE.history.photo.src} alt={GUIDE.history.photo.alt} loading="lazy" />
+            <div>
+              <p className={g.p}>{GUIDE.history.body}</p>
+              <p className={g.small}>{GUIDE.history.caption}</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="reno-2018" className={`${s.section} ${g.block}`}>
+          <span className={g.kicker}>August 2018 - May 2019</span>
+          <h2 className={g.h2}>The 2018-19 renovation</h2>
+          <p className={g.p}>{GUIDE.reno2018.lede}</p>
+          <Timeline items={GUIDE.reno2018.items} />
+        </section>
+
+        <section id="reno-2022" className={`${s.section} ${g.block}`}>
+          <span className={g.kicker}>2022 - 2023</span>
+          <h2 className={g.h2}>Creating the basement unit</h2>
+          <p className={g.p}>{GUIDE.reno2022.lede}</p>
+          <Timeline items={GUIDE.reno2022.items} />
+        </section>
+
+        <div className={`${s.section} ${s.contactCard}`}>
+          <div className={s.contactText}>
+            <h2 className={s.h2}>Questions about anything here?</h2>
+            <p>Call, text or email {SHOWING_CONTACT.name}. We&apos;re always happy to chat.</p>
+            <a className={s.phoneBig} href={`tel:${SHOWING_CONTACT.phone.replace(/[^\d+]/g, "")}`}>{SHOWING_CONTACT.phone}</a>
+          </div>
+          <div className={s.contactActions}>
+            <a className={`${s.btn} ${s.btnPrimary}`} href="/showings">Book a showing</a>
+            <a className={s.btn} href={`mailto:${SHOWING_CONTACT.email}`}><i className="bi bi-envelope"></i> Email</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -635,8 +635,8 @@ export default function Showings({ unit, listing, contact }: { unit: ShowingUnit
                 <ol className={s.tips}>
                   {TENANT_GUIDE.tips.map(t => <li key={t}>{t}</li>)}
                 </ol>
-                <a className={`${s.btn} ${s.btnPrimary}`} href={TENANT_GUIDE.url} target="_blank" rel="noopener noreferrer">
-                  Read the full guide <i className="bi bi-arrow-up-right"></i>
+                <a className={`${s.btn} ${s.btnPrimary}`} href={TENANT_GUIDE.url}>
+                  Read the full guide <i className="bi bi-arrow-right"></i>
                 </a>
               </div>
             )}

@@ -1,0 +1,261 @@
+/* Guide page. Colour tokens come from .page in showings.module.css */
+
+.hero {
+  margin: 20px 0 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.heroImg {
+  display: block;
+  width: 100%;
+  height: 340px;
+  object-fit: cover;
+}
+
+@media (max-width: 560px) {
+  .heroImg { height: 220px; }
+}
+
+.heroBody { padding: 24px; }
+.heroBody h1 { margin-top: 2px; }
+.heroBody p { margin-bottom: 18px; }
+
+@media (max-width: 480px) {
+  .heroBody { padding: 18px; }
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.facts div {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px 14px;
+}
+
+.facts dt { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.facts dd { margin: 2px 0 0; font-size: 15px; font-weight: 650; }
+
+/* Section chips; sticks to the top while reading */
+.toc {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 10px 0;
+  margin-bottom: 8px;
+  background: var(--bg);
+}
+
+.toc::-webkit-scrollbar { display: none; }
+
+.toc a {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.toc a:hover { border-color: var(--accent); color: var(--accent); }
+
+.block { scroll-margin-top: 64px; }
+
+.kicker {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.h2 {
+  font-size: clamp(22px, 4vw, 28px);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  margin: 4px 0 12px;
+}
+
+.p {
+  font-size: 15.5px;
+  line-height: 1.65;
+  color: var(--ink);
+  margin: 0 0 14px;
+}
+
+.small { font-size: 13.5px; color: var(--muted); margin: 8px 0 0; }
+.small a { color: var(--accent); text-decoration: underline; }
+
+/* Steps */
+.steps {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 22px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .steps { grid-template-columns: 1fr; }
+}
+
+.steps li {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+}
+
+.steps b { font-size: 15px; }
+.steps p { margin: 4px 0 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
+
+.stepNum {
+  flex: 0 0 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Ideal tenant */
+.points { display: grid; gap: 14px; margin: 6px 0 4px; }
+.point { display: flex; gap: 12px; }
+.point i { color: var(--ok); font-size: 20px; line-height: 1.2; }
+.point b { font-size: 15.5px; }
+.point p { margin: 3px 0 0; font-size: 14.5px; line-height: 1.6; color: var(--muted); }
+
+/* FAQ */
+.faq { border-top: 1px solid var(--line); }
+
+.faq details { border-bottom: 1px solid var(--line); }
+
+.faq summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 2px;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary i { color: var(--muted); transition: transform 0.2s ease; }
+.faq details[open] summary i { transform: rotate(180deg); color: var(--accent); }
+.faq details p { margin: 0 2px 16px; font-size: 15px; line-height: 1.6; color: var(--muted); }
+
+/* About / history */
+.about {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 22px;
+  align-items: start;
+}
+
+.about img {
+  width: 100%;
+  border-radius: 18px;
+  display: block;
+  object-fit: cover;
+  aspect-ratio: 1;
+}
+
+@media (max-width: 640px) {
+  .about { grid-template-columns: 1fr; }
+  .about img { max-width: 320px; }
+}
+
+/* Renovation timelines */
+.timeline {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0 0 0 22px;
+  border-left: 2px solid var(--line);
+}
+
+.timeline li {
+  position: relative;
+  padding: 0 0 26px;
+}
+
+.timeline li::before {
+  content: "";
+  position: absolute;
+  left: -30px;
+  top: 5px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 3px solid var(--accent);
+}
+
+.timeline li:last-child { padding-bottom: 4px; }
+.timeline h3 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 4px; }
+.timeline p { font-size: 14.5px; line-height: 1.6; color: var(--muted); margin: 0 0 10px; }
+
+.photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.photosOne { grid-template-columns: minmax(0, 420px); }
+
+.photo {
+  position: relative;
+  display: block;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--surface-2);
+  text-decoration: none;
+}
+
+.photo img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.photo:hover img { transform: scale(1.03); }
+
+.photo span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 18px 10px 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+}

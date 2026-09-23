@@ -6,8 +6,8 @@ import s from "./SiteHeader.module.css";
 // One header for the whole site (parking + showings), rendered from the root layout
 export default function SiteHeader() {
   const path = usePathname() || "/";
-  const onShowings = path.startsWith("/showings") && !path.startsWith("/showings/admin");
-  const active = path.startsWith("/showings") ? "showings" : "parking";
+  const onShowings = (path.startsWith("/showings") && !path.startsWith("/showings/admin")) || path.startsWith("/guide");
+  const active = path.startsWith("/showings") ? "showings" : path.startsWith("/guide") ? "guide" : "parking";
 
   return (
     <header className={`${s.bar} ${onShowings ? s.darkOk : ""}`}>
@@ -22,7 +22,10 @@ export default function SiteHeader() {
               <i className="bi bi-p-square"></i> Parking
             </Link>
             <Link href="/showings" className={`${s.link} ${active === "showings" ? s.active : ""}`}>
-              <i className="bi bi-key"></i> Units &amp; showings
+              <i className="bi bi-key"></i> Units
+            </Link>
+            <Link href="/guide" className={`${s.link} ${active === "guide" ? s.active : ""}`}>
+              <i className="bi bi-book"></i> Guide
             </Link>
           </nav>
         </div>

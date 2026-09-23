@@ -29,9 +29,9 @@ export const SHOWING_CONTACT = {
 
 export const BUILDING_ADDRESS = "180 Beatrice St, Toronto";
 
-// Public "General information" doc: house history, renovations, ideal tenant, FAQ
+// Tenant guide page (/guide): house history, renovations, ideal tenant, FAQ
 export const TENANT_GUIDE = {
-  url: "https://docs.google.com/document/d/1R-sSgzUc_TCxS20ZF6NHeIS0VpqjryC_u_YPu-TzMk4/edit?usp=sharing",
+  url: "/guide",
   tips: [
     "Consent to a credit check, or bring a detailed credit report",
     "Be clear about must-haves like parking or pets",
