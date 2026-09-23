@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { DateTime } from "luxon";
 import { SHOWING_UNITS } from "@/lib/showingUnits";
+import PreviewFrame from "./PreviewFrame";
 
 export interface AdminApplication {
   row: number; submittedAt: string; name: string; email: string; phone: string; occupants: string; moveIn: string;
@@ -69,14 +70,15 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite, book
   // Rendered preview of the decline email, refreshed shortly after edits
   useEffect(() => {
     if (!decline?.send) { setDeclinePreview(null); return; }
+    let cancelled = false;
     const t = setTimeout(async () => {
       const res = await fetch("/api/showings/admin/applications", {
         method: "POST", headers,
         body: JSON.stringify({ unit: unitSlug, name: decline.app.name, email: decline.app.email, message: decline.message, status: decline.stage, previewOnly: true }),
       });
-      if (res.ok) setDeclinePreview(await res.json());
-    }, 400);
-    return () => clearTimeout(t);
+      if (res.ok && !cancelled) setDeclinePreview(await res.json());
+    }, 300);
+    return () => { cancelled = true; clearTimeout(t); };
   }, [decline?.message, decline?.send, decline?.app.row]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!units.length) return null;
@@ -211,7 +213,7 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite, book
                     {!decline.send ? (
                       <div className="text-muted small">No email will be sent.</div>
                     ) : declinePreview ? (
-                      <iframe title="Decline preview" srcDoc={declinePreview.html} style={{ width: "100%", height: 420, border: "1px solid var(--bs-border-color)", borderRadius: 12, background: "#f5f1ea" }} />
+                      <PreviewFrame title="Decline preview" html={declinePreview.html} height={420} />
                     ) : (
                       <div className="text-muted small">Loading preview...</div>
                     )}

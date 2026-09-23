@@ -1,9 +1,10 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SHOWING_UNITS } from "@/lib/showingUnits";
 import { defaultMessage } from "./InvitePanel";
 import type { AdminWindow } from "./WindowsPanel";
 import type { InviteTarget } from "./ApplicationsPanel";
+import PreviewFrame from "./PreviewFrame";
 
 // "Invite to showing" from an application: edit the message, see the email, send
 export default function InviteModal({ adminKey, target, windows, onClose, onSent }: {
@@ -16,10 +17,12 @@ export default function InviteModal({ adminKey, target, windows, onClose, onSent
   const [stale, setStale] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const seq = useRef(0);
 
   const call = async (send: boolean) => {
-    setBusy(true);
+    if (send) setBusy(true);
     setError("");
+    const id = ++seq.current;
     try {
       const res = await fetch("/api/showings/admin/invite", {
         method: "POST",
@@ -27,6 +30,7 @@ export default function InviteModal({ adminKey, target, windows, onClose, onSent
         body: JSON.stringify({ unit: target.unit, name: target.name, email, phone: target.phone, message, send, row: send ? target.row : undefined }),
       });
       const data = await res.json();
+      if (!send && id !== seq.current) return; // a newer preview is on its way
       if (!res.ok) return setError(data.error || "Failed");
       setPreview({ html: data.html, subject: data.subject, code: data.code });
       setStale(false);
@@ -40,7 +44,12 @@ export default function InviteModal({ adminKey, target, windows, onClose, onSent
     }
   };
 
-  useEffect(() => { call(false); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Refresh the preview shortly after typing pauses
+  useEffect(() => {
+    setStale(true);
+    const t = setTimeout(() => call(false), 350);
+    return () => clearTimeout(t);
+  }, [message, email]); // eslint-disable-line react-hooks/exhaustive-deps
   const noWindows = !windows.some(w => w.unit === unit.code);
 
   return (
@@ -56,18 +65,18 @@ export default function InviteModal({ adminKey, target, windows, onClose, onSent
             <div className="row g-3">
               <div className="col-lg-5">
                 <label className="form-label" htmlFor="im-email">Send to</label>
-                <input id="im-email" className="form-control mb-3" type="email" value={email} onChange={e => { setEmail(e.target.value); setStale(true); }} />
+                <input id="im-email" className="form-control mb-3" type="email" value={email} onChange={e => setEmail(e.target.value)} />
                 <label className="form-label" htmlFor="im-msg">Message</label>
-                <textarea id="im-msg" className="form-control" rows={14} value={message} onChange={e => { setMessage(e.target.value); setStale(true); }} />
+                <textarea id="im-msg" className="form-control" rows={14} value={message} onChange={e => setMessage(e.target.value)} />
                 <div className="form-text">Below your message the email adds a &quot;Pick a showing time&quot; button, their invite code{preview ? ` (${preview.code})` : ""} and a tenant guide link.</div>
               </div>
               <div className="col-lg-7">
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <span className="form-label mb-0">Preview{preview ? `: ${preview.subject}` : ""}</span>
-                  {stale && <button className="btn btn-sm btn-outline-secondary" onClick={() => call(false)} disabled={busy}>Update preview</button>}
+                  {stale && <span className="small text-muted">Updating...</span>}
                 </div>
                 {preview ? (
-                  <iframe title="Invite preview" srcDoc={preview.html} style={{ width: "100%", height: 560, border: "1px solid var(--bs-border-color)", borderRadius: 12, background: "#f5f1ea", opacity: stale ? 0.6 : 1 }} />
+                  <PreviewFrame title="Invite preview" html={preview.html} height={560} dim={stale} />
                 ) : (
                   <div className="text-muted small">Loading preview...</div>
                 )}
