@@ -1,12 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import { DateTime } from "luxon";
+import { getUnitByCode } from "@/lib/showingUnits";
 
 const TZ = "America/Toronto";
 const KEY_STORAGE = "showingsAdminKey";
 
 interface Booking {
   eventId: string;
+  unit: string;
   startIso: string;
   ref: string;
   name: string;
@@ -73,7 +75,7 @@ export default function ShowingsAdmin() {
       <div className="table-responsive">
         <table className="table align-middle">
           <thead>
-            <tr><th>Time</th><th>Name</th><th>Phone</th><th>Email</th><th>Pet</th><th>Ref</th><th></th></tr>
+            <tr><th>Time</th><th>Unit</th><th>Name</th><th>Phone</th><th>Email</th><th>Pet</th><th>Ref</th><th></th></tr>
           </thead>
           <tbody>
             {bookings.map(b => {
@@ -84,6 +86,7 @@ export default function ShowingsAdmin() {
               return (
                 <tr key={b.eventId}>
                   <td className="text-nowrap">{showDay ? <b>{day} </b> : null}{t.toFormat("h:mm a")}</td>
+                  <td className="text-nowrap">{getUnitByCode(b.unit)?.label || b.unit}</td>
                   <td>{b.name}</td>
                   <td className="text-nowrap"><a className="text-primary" href={`tel:${b.phone}`}>{b.phone}</a></td>
                   <td><a className="text-primary" href={`mailto:${b.email}`}>{b.email}</a></td>

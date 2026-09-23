@@ -1,0 +1,59 @@
+// Per-unit showing setup. Safe to import from client components.
+// Add a unit here to open /showings/<slug>; remove its windows to close it.
+
+export interface ShowingWindow {
+  date: string;  // YYYY-MM-DD, America/Toronto
+  start: string; // HH:mm
+  end: string;   // HH:mm, exclusive
+}
+
+export interface ShowingUnit {
+  slug: string;  // URL segment
+  code: string;  // digits only; used in calendar event ids
+  label: string;
+  blurb: string;
+  listingUrl: string;
+  slotMinutes: number;
+  windows: ShowingWindow[];
+  facts: { icon: string; title: string; body: string }[];
+}
+
+export const SHOWING_CONTACT = {
+  name: "Andrew",
+  email: "andrewjohnmcgrath@gmail.com",
+  phone: "", // e.g. "416-555-0123"; shows Call/Text buttons when set
+};
+
+export const BUILDING_ADDRESS = "180 Beatrice St, Toronto";
+
+export const SHOWING_UNITS: ShowingUnit[] = [
+  {
+    slug: "unit-3",
+    code: "3",
+    label: "Unit 3",
+    blurb: "Lower-level apartment in Little Italy",
+    listingUrl: "https://little-italy-rentals.mylistingai.co/listing/180-beatrice-st-toronto-on-m6g-3g1-canada-167074",
+    slotMinutes: 15,
+    windows: [
+      { date: "2026-10-02", start: "18:00", end: "20:00" },
+      { date: "2026-10-03", start: "11:00", end: "13:00" },
+    ],
+    facts: [
+      { icon: "bi-person", title: "One visitor at a time", body: "Each showing is a relaxed 15 minutes with just you (and anyone you'd live with)." },
+      { icon: "bi-heart", title: "Bring your pet", body: "If you have a pet, please bring them along. We'd love to meet them." },
+      {
+        icon: "bi-tools",
+        title: "Mechanical room access",
+        body: "The building's boiler and water shut-offs are reached through this unit. We need in about once a year (arranged ahead), and occasionally on short notice in an emergency.",
+      },
+    ],
+  },
+];
+
+export function getUnit(slug: string): ShowingUnit | undefined {
+  return SHOWING_UNITS.find(u => u.slug === slug);
+}
+
+export function getUnitByCode(code: string): ShowingUnit | undefined {
+  return SHOWING_UNITS.find(u => u.code === code);
+}
