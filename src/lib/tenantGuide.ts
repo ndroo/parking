@@ -33,6 +33,18 @@ export const GUIDE = {
     ],
   },
 
+  documents: {
+    lede: "Share anything you feel strengthens your application. We're not rigid: make the best case you can, and we'll assess it on its merits. Everyone's situation is different, so use what fits yours.",
+    groups: [
+      { title: "Income", items: ["Employment letter", "Recent pay stubs", "Notice of Assessment or recent bank statements (great if you're self-employed)", "Proof of savings, scholarships or other support"] },
+      { title: "Rental history", items: ["Contact for a current or past landlord (hold off on your current one if you haven't given notice)", "Rent payment records"] },
+      { title: "Credit", items: ["Consent for a credit check, or a recent credit report", "A quick note explaining anything unusual"] },
+      { title: "Anything else", items: ["A guarantor's details, if someone is backing your lease", "Details about your pet (breed, age, temperament)", "A short intro about you and why this place fits"] },
+    ],
+    timing: "If you can, bring what you have to the showing or send it right after. We aim to offer a lease within 24-72 hours of showings, and moving quickly helps us both.",
+    privacy: "We'll only use what you share to review your application. You never need to send your SIN.",
+  },
+
   utilities: {
     included: ["Heat", "Water (see below)"],
     notIncluded: [{ name: "Hydro", note: "Each unit has its own meter, typically $50-125/month depending on usage." }],
@@ -40,13 +52,9 @@ export const GUIDE = {
       summary: "Water is included in your rent. Once a year we review how many people live in each unit. Units with above-average occupancy for the building pay a prorated share of the water bill, calculated each quarter when the bill arrives.",
       formula: "Your share = Quarterly bill × (Your unit's occupants − Building average) ÷ Total occupants in the building",
       example: {
-        setup: "Two units have 2 people and one has 3, so the building has 7 people and an average of 2.33 per unit. With a sample quarterly bill of $420:",
-        units: [
-          { unit: "2 people", calc: "At or below average", charge: "$0" },
-          { unit: "2 people", calc: "At or below average", charge: "$0" },
-          { unit: "3 people", calc: "$420 × (3 − 2.33) ÷ 7", charge: "$40 per quarter" },
-        ],
-        note: "If every unit has the same number of people, nobody pays anything extra.",
+        bill: 420,
+        occupants: [2, 2, 3],
+        note: "If every unit has the same number of people, nobody pays anything extra. Figures are illustrative; actual bills vary by season and usage.",
       },
     },
   },

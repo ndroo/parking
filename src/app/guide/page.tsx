@@ -5,6 +5,7 @@ import { GUIDE, GuideItem } from "@/lib/tenantGuide";
 import { getListing } from "@/lib/listingai";
 import { SHOWING_CONTACT, SHOWING_UNITS } from "@/lib/showingUnits";
 import { Gallery, ZoomImage } from "./Gallery";
+import WaterCalculator from "./WaterCalculator";
 
 export const metadata: Metadata = {
   title: "Tenant guide - 180 Beatrice",
@@ -13,6 +14,7 @@ export const metadata: Metadata = {
 
 const SECTIONS = [
   { id: "selected", label: "Getting selected" },
+  { id: "documents", label: "What to share" },
   { id: "utilities", label: "Utilities & bills" },
   { id: "ideal", label: "Our ideal tenant" },
   { id: "faq", label: "FAQ" },
@@ -80,6 +82,22 @@ export default async function GuidePage() {
           <a className={`${s.btn} ${s.btnPrimary}`} href="/showings">See units and book a showing <i className="bi bi-arrow-right"></i></a>
         </section>
 
+        <section id="documents" className={`${s.section} ${g.block}`}>
+          <span className={g.kicker}>Your application</span>
+          <h2 className={g.h2}>What to share</h2>
+          <p className={g.p}>{GUIDE.documents.lede}</p>
+          <div className={g.docGrid}>
+            {GUIDE.documents.groups.map(grp => (
+              <div key={grp.title} className={g.utilCard}>
+                <b>{grp.title}</b>
+                <ul>{grp.items.map(i => <li key={i}>{i}</li>)}</ul>
+              </div>
+            ))}
+          </div>
+          <p className={g.p} style={{ marginTop: 16 }}>{GUIDE.documents.timing}</p>
+          <p className={g.small}><i className="bi bi-shield-lock"></i> {GUIDE.documents.privacy}</p>
+        </section>
+
         <section id="utilities" className={`${s.section} ${g.block}`}>
           <span className={g.kicker}>What's included</span>
           <h2 className={g.h2}>Utilities &amp; bills</h2>
@@ -96,15 +114,7 @@ export default async function GuidePage() {
           <h3 className={g.h3}>How water works</h3>
           <p className={g.p}>{GUIDE.utilities.water.summary}</p>
           <div className={g.formula}>{GUIDE.utilities.water.formula}</div>
-          <p className={g.p}>{GUIDE.utilities.water.example.setup}</p>
-          <table className={g.calcTable}>
-            <thead><tr><th>Unit</th><th>Calculation</th><th>Water charge</th></tr></thead>
-            <tbody>
-              {GUIDE.utilities.water.example.units.map((u, i) => (
-                <tr key={i}><td>{u.unit}</td><td>{u.calc}</td><td><b>{u.charge}</b></td></tr>
-              ))}
-            </tbody>
-          </table>
+          <WaterCalculator initialBill={GUIDE.utilities.water.example.bill} initialOccupants={GUIDE.utilities.water.example.occupants} />
           <p className={g.small}>{GUIDE.utilities.water.example.note}</p>
         </section>
 
