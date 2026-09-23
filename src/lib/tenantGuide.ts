@@ -19,6 +19,16 @@ export const GUIDE = {
     { label: "Hydro (metered)", value: "$50-125/mo" },
   ],
 
+  process: [
+    { icon: "bi-megaphone", title: "We post the listing", body: "Photos, price and details go up on our listing page." },
+    { icon: "bi-chat-dots", title: "You reach out", body: "Send us a message with any questions. We're happy to chat." },
+    { icon: "bi-pencil-square", title: "You apply", body: "A short application on this site, about 5 minutes.", link: { label: "Apply", href: "/showings" } },
+    { icon: "bi-search", title: "We review", body: "We read every application personally. If it looks like a good fit on both sides, we email you a personal booking link." },
+    { icon: "bi-house-door", title: "Viewing", body: "Pick a 15 minute time that suits you. One household at a time, and bring your pet if you have one." },
+    { icon: "bi-folder-check", title: "Document review", body: "Bring your documents to the viewing, or send them right after. We're not rigid: share whatever makes your case best.", link: { label: "What to share", href: "#documents" } },
+    { icon: "bi-check2-circle", title: "Decision", body: "We aim to offer a lease within 24-72 hours of showings. If selected, have your deposit ready within 48 hours and sign the lease." },
+  ],
+
   selected: {
     lede: "It's pretty simple. These are the steps I've followed myself in the past, so I share them with you! Generally it comes down to making it an easy \"yes\" for the landlord, so keep that in mind and come prepared.",
     steps: [

@@ -13,6 +13,7 @@ export const metadata: Metadata = {
 };
 
 const SECTIONS = [
+  { id: "process", label: "Our process" },
   { id: "selected", label: "Getting selected" },
   { id: "documents", label: "What to share" },
   { id: "utilities", label: "Utilities & bills" },
@@ -66,6 +67,25 @@ export default async function GuidePage() {
         <nav className={g.toc} aria-label="Guide sections">
           {SECTIONS.map(x => <a key={x.id} href={`#${x.id}`}>{x.label}</a>)}
         </nav>
+
+        <section id="process" className={`${s.section} ${g.block}`}>
+          <span className={g.kicker}>How it works</span>
+          <h2 className={g.h2}>Our process</h2>
+          <ol className={g.process}>
+            {GUIDE.process.map((st, i) => (
+              <li key={st.title}>
+                <span className={g.processDot}><i className={`bi ${st.icon}`}></i></span>
+                <div>
+                  <b><span className={g.processNum}>{i + 1}.</span> {st.title}</b>
+                  <p>
+                    {st.body}
+                    {st.link && <> <a href={st.link.href}>{st.link.label} &rarr;</a></>}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
 
         <section id="selected" className={`${s.section} ${g.block}`}>
           <span className={g.kicker}>For applicants</span>
