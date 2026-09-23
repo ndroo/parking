@@ -48,3 +48,7 @@ All times are in America/Toronto.
 - Shared site header (`src/components/SiteHeader.tsx`) and the parking page theme (`src/app/parking-theme.css`) keep parking and showings visually consistent at one content width (960px).
 - Env: `CALENDAR_ID_SHOWINGS` (one calendar for all units, shared with the service account), `SHOWINGS_ADMIN_KEY`.
 - Double-booking is prevented by giving each unit + slot a deterministic event id (`u<code>d<yyyymmdd>t<hhmm>`); a second insert returns 409.
+
+### Deploying
+
+The Vercel project is connected to this repo: pushing to `main` deploys to production automatically. `vercel --prod` from a linked checkout also works. Production env vars are managed in Vercel (Project → Settings → Environment Variables).
