@@ -36,7 +36,7 @@ export const GUIDE = {
   documents: {
     lede: "Share anything you feel strengthens your application. We're not rigid: make the best case you can, and we'll assess it on its merits. Everyone's situation is different, so use what fits yours.",
     groups: [
-      { title: "Income", items: ["Employment letter", "Recent pay stubs", "Notice of Assessment or recent bank statements (great if you're self-employed)", "Proof of savings, scholarships or other support"] },
+      { title: "Income", items: ["Employment letter", "Recent pay stubs", "Last year's T4 or T1 General (ideal), or Notice of Assessment", "Bank or credit card statements (great if you're self-employed)", "Proof of savings, scholarships or other support"] },
       { title: "Rental history", items: ["Contact for a current or past landlord (hold off on your current one if you haven't given notice)", "Rent payment records"] },
       { title: "Credit", items: ["Consent for a credit check, or a recent credit report", "A quick note explaining anything unusual"] },
       { title: "Anything else", items: ["A guarantor's details, if someone is backing your lease", "Details about your pet (breed, age, temperament)", "A short intro about you and why this place fits"] },
