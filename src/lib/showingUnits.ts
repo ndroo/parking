@@ -64,7 +64,7 @@ export const SHOWING_UNITS: ShowingUnit[] = [
     bookable: true,
     slotMinutes: 15,
     windows: [
-      { date: "2026-10-02", start: "18:00", end: "20:00" },
+      { date: "2026-10-02", start: "17:30", end: "20:00" },
       { date: "2026-10-03", start: "11:00", end: "13:00" },
     ],
     facts: [

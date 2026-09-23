@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { isAvailable } from "@/lib/ics";
 import { createEvent } from "@/lib/google";
-import { calculateBestPrice } from "@/lib/pricing";
+import { calculateBestPrice, formatPrice } from "@/lib/pricing";
+import { notifyParkingBooked } from "@/lib/notify";
 import { Spot } from "@/lib/types";
 import { customAlphabet } from "nanoid";
 import { DateTime } from "luxon";
@@ -69,6 +70,7 @@ export async function POST(req: NextRequest) {
       return new Response(JSON.stringify({ error: err?.message || "Failed to create event" }), { status: 502 });
     }
     const price = calculateBestPrice(finalStartIso, finalEndIso);
+    await notifyParkingBooked({ spot, ref, name, email, phone, plate, startIso: finalStartIso, endIso: finalEndIso, price: formatPrice(price.totalCents), manageUrl: `${req.nextUrl.origin}/manage` });
     return new Response(JSON.stringify({ ref, eventId: id, priceCents: price.totalCents }), { status: 200, headers: { "Content-Type": "application/json" } });
   } catch (e: any) {
     return new Response(JSON.stringify({ error: e.message || "unexpected" }), { status: 500 });

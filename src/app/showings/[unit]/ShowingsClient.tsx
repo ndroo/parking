@@ -83,7 +83,17 @@ async function manageApi(unit: ShowingUnit, body: Record<string, string>) {
 }
 
 function Stepper({ labels, current }: { labels: string[]; current: number }) {
+  const done = current >= labels.length - 1;
+  const pct = done ? 100 : ((current + 0.5) / labels.length) * 100;
   return (
+    <div className={s.progress}>
+      <div className={s.progressHead}>
+        <span className={s.progressStep}>{done ? "All done" : `Step ${current + 1} of ${labels.length}`}</span>
+        <span className={s.progressLabel}>{done ? "Your showing is booked" : `${labels[current]}${current < labels.length - 2 ? `, then ${labels[current + 1].toLowerCase()}` : ""}`}</span>
+      </div>
+      <div className={s.progressTrack} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(pct)}>
+        <div className={`${s.progressFill} ${done ? s.progressDone : ""}`} style={{ width: `${pct}%` }}></div>
+      </div>
     <ol className={s.stepper} aria-label="Booking steps">
       {labels.map((label, i) => {
         const state = i < current ? s.stepDone : i === current ? s.stepCurrent : "";
@@ -95,6 +105,35 @@ function Stepper({ labels, current }: { labels: string[]; current: number }) {
         );
       })}
     </ol>
+    </div>
+  );
+}
+
+function ConfirmDialog({ open, title, body, confirmLabel, cancelLabel, busy, onConfirm, onClose }: {
+  open: boolean; title: string; body: React.ReactNode; confirmLabel: string; cancelLabel: string; busy: boolean;
+  onConfirm: () => void; onClose: () => void;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" && !busy) onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, busy, onClose]);
+  if (!open) return null;
+  return (
+    <div className={s.overlay} onClick={() => !busy && onClose()}>
+      <div className={s.dialog} role="alertdialog" aria-modal="true" aria-labelledby="dlg-title" onClick={e => e.stopPropagation()}>
+        <div className={s.dialogIcon}><i className="bi bi-calendar-x"></i></div>
+        <h2 id="dlg-title" className={s.h2}>{title}</h2>
+        <div className={s.dialogBody}>{body}</div>
+        <div className={s.dialogActions}>
+          <button className={s.btn} onClick={onClose} disabled={busy} autoFocus>{cancelLabel}</button>
+          <button className={`${s.btn} ${s.btnDangerSolid}`} onClick={onConfirm} disabled={busy}>
+            {busy ? "Cancelling..." : confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -293,11 +332,13 @@ export default function Showings({ unit, listing, contact }: { unit: ShowingUnit
 
   const cancel = async () => {
     if (!booking) return;
-    if (!confirmCancel) return setConfirmCancel(true);
     setBusy(true);
     const { ok, data } = await manage({ action: "cancel", ref: booking.ref, email: booking.email });
     setBusy(false);
-    if (!ok) return setError(data.error);
+    if (!ok) {
+      setConfirmCancel(false);
+      return setError(data.error);
+    }
     store.clear();
     setBooking(null);
     setConfirmCancel(false);
@@ -446,16 +487,16 @@ export default function Showings({ unit, listing, contact }: { unit: ShowingUnit
                   })}
                 </div>
 
-                <div ref={continueRef} className={s.continueBar}>
+                <div ref={continueRef} className={`${s.continueBar} ${selected ? s.continueSticky : ""}`}>
                   <div className={s.continueText}>
                     {selected ? (
                       <><b>{dt(selected.startIso).toFormat("ccc, LLL d")}</b> at <b>{fmtTime(selected.startIso)}</b></>
                     ) : (
-                      <span className={s.mutedText}>Tap a time to continue</span>
+                      <span className={s.mutedText}>Pick a time above to continue</span>
                     )}
                   </div>
                   <button className={`${s.btn} ${s.btnPrimary}`} disabled={!selected} onClick={() => goStep(1)}>
-                    Continue <i className="bi bi-arrow-right"></i>
+                    {selected ? "Next step" : "Continue"} <i className="bi bi-arrow-right"></i>
                   </button>
                 </div>
               </div>
@@ -572,8 +613,8 @@ export default function Showings({ unit, listing, contact }: { unit: ShowingUnit
                       <button className={s.btn} onClick={() => { setMode("reschedule"); setStep(0); setSelected(null); setError(""); setActiveDay(dayKey(booking.startIso)); scrollTo(flowRef); }}>
                         <i className="bi bi-arrow-left-right"></i> Change time
                       </button>
-                      <button className={`${s.btn} ${confirmCancel ? s.btnDangerSolid : s.btnDanger}`} onClick={cancel} disabled={busy}>
-                        <i className="bi bi-x-circle"></i> {confirmCancel ? "Tap again to cancel" : "Cancel showing"}
+                      <button className={`${s.btn} ${s.btnDanger}`} onClick={() => setConfirmCancel(true)} disabled={busy}>
+                        <i className="bi bi-x-circle"></i> Cancel showing
                       </button>
                     </div>
                   </div>
@@ -615,6 +656,19 @@ export default function Showings({ unit, listing, contact }: { unit: ShowingUnit
             </a>
           </div>
         </div>
+
+        {booking && (
+          <ConfirmDialog
+            open={confirmCancel}
+            title="Cancel your showing?"
+            body={<>This releases your {dt(booking.startIso).toFormat("cccc 'at' h:mm a")} time so someone else can book it. You can book a new time afterwards if one is open.</>}
+            confirmLabel="Yes, cancel"
+            cancelLabel="Keep it"
+            busy={busy}
+            onConfirm={cancel}
+            onClose={() => setConfirmCancel(false)}
+          />
+        )}
 
         <p className={s.footer}>
           {unit.label}, {BUILDING_ADDRESS} · <a href={unit.listingUrl} target="_blank" rel="noopener noreferrer">Listing details</a>

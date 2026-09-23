@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { DateTime } from "luxon";
 import { cancelShowing, createShowing, findShowing, findSlot, ShowingBooking, SlotTakenError } from "@/lib/showings";
 import { getUnit } from "@/lib/showingUnits";
+import { notifyShowing } from "@/lib/notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,11 +31,13 @@ export async function POST(req: NextRequest, { params }: Ctx) {
     const { action, ref, email, startIso } = await req.json();
     const booking = await findShowing(unit, ref, email);
     if (!booking) return json({ error: "We couldn't find a booking with that reference and email." }, 404);
+    const info = { unit, ref: booking.ref, name: booking.name, email: booking.email, phone: booking.phone, pet: booking.pet, manageUrl: `${req.nextUrl.origin}/showings/${unit.slug}` };
 
     if (action === "lookup") return json({ booking: publicView(booking) });
 
     if (action === "cancel") {
       await cancelShowing(booking.eventId);
+      await notifyShowing("cancelled", { ...info, startIso: booking.startIso });
       return json({ ok: true });
     }
 
@@ -49,6 +52,7 @@ export async function POST(req: NextRequest, { params }: Ctx) {
       // Claim the new slot first so a failure leaves the original booking intact
       const moved = await createShowing({ unit, slot, name: booking.name, email: booking.email, phone: booking.phone, pet: booking.pet, ref: booking.ref });
       await cancelShowing(booking.eventId);
+      await notifyShowing("moved", { ...info, startIso: moved.startIso }, booking.startIso);
       return json({ booking: publicView(moved) });
     }
 

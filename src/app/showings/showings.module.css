@@ -1000,3 +1000,131 @@
 
 .badgeOpen { background: var(--ok-soft); color: var(--ok); }
 .badgeClosed { background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); }
+
+/* Progress (sticks to the top while booking) */
+.progress {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg);
+  padding: 12px 0 14px;
+  margin: 0 0 6px;
+}
+
+.progressHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.progressStep {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.progressLabel { font-size: 15px; font-weight: 650; }
+
+.progressTrack {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+  transition: width 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.3s ease;
+}
+
+.progressDone { background: var(--ok); }
+.progress .stepper { margin-bottom: 0; }
+
+@media (max-width: 560px) {
+  .progress .step { padding: 8px 4px; }
+  .progress .stepDot { width: 24px; height: 24px; flex-basis: 24px; font-size: 12px; }
+}
+
+/* Continue bar sticks to the bottom once a time is picked */
+.continueSticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 15;
+  background: var(--surface);
+  margin: 18px -24px -24px;
+  padding: 14px 24px;
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 24px 24px;
+  box-shadow: 0 -8px 24px rgba(40, 30, 20, 0.08);
+  animation: rise 0.25s ease;
+}
+
+@media (max-width: 480px) {
+  .continueSticky { margin: 16px -18px -18px; padding: 12px 18px; border-radius: 0 0 20px 20px; }
+}
+
+/* Confirm dialog */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(20, 15, 10, 0.45);
+  backdrop-filter: blur(3px);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  animation: fade 0.15s ease;
+}
+
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+.dialog {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 26px 24px 22px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  animation: rise 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.dialogIcon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 14px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+.dialogBody {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--muted);
+  margin: 8px 0 20px;
+}
+
+.dialogActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 380px) {
+  .dialogActions { grid-template-columns: 1fr; }
+}
+
+.continueBar .btn { flex: 0 0 auto; white-space: nowrap; }

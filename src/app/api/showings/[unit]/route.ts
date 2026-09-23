@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { DateTime } from "luxon";
 import { createShowing, findSlot, getSlots, listShowings, SlotTakenError } from "@/lib/showings";
 import { getUnit } from "@/lib/showingUnits";
+import { notifyShowing } from "@/lib/notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,6 +58,7 @@ export async function POST(req: NextRequest, { params }: Ctx) {
     }
 
     const booking = await createShowing({ unit, slot, name: cleanName, email: cleanEmail, phone: cleanPhone, pet: cleanPet });
+    await notifyShowing("booked", { unit, ref: booking.ref, name: cleanName, email: cleanEmail, phone: cleanPhone, pet: cleanPet, startIso: slot.startIso, manageUrl: `${req.nextUrl.origin}/showings/${unit.slug}` });
     return json({ booking: { ref: booking.ref, name: cleanName, email: cleanEmail, phone: cleanPhone, pet: cleanPet, startIso: slot.startIso, endIso: slot.endIso } });
   } catch (e: any) {
     if (e instanceof SlotTakenError) return json({ error: "Someone just grabbed that time. Please pick another." }, 409);
