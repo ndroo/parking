@@ -56,7 +56,7 @@ export const GUIDE = {
   },
 
   utilities: {
-    included: ["Heat", "Water, for households of up to 2 adults (see below)"],
+    included: ["Heat", "Water (see the large household exception below)"],
     notIncluded: [
       { name: "Hydro", note: "Each unit has its own meter, typically $50-125/month depending on usage." },
       { name: "Internet", note: "Set up your own plan. The house is wired for both fibre optic and cable internet, so you can pick the provider you like." },
