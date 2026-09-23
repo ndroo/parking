@@ -33,6 +33,24 @@ export const GUIDE = {
     ],
   },
 
+  utilities: {
+    included: ["Heat", "Water (see below)"],
+    notIncluded: [{ name: "Hydro", note: "Each unit has its own meter, typically $50-125/month depending on usage." }],
+    water: {
+      summary: "Water is included in your rent. Once a year we review how many people live in each unit. Units with above-average occupancy for the building pay a prorated share of the water bill, calculated each quarter when the bill arrives.",
+      formula: "Your share = Quarterly bill × (Your unit's occupants − Building average) ÷ Total occupants in the building",
+      example: {
+        setup: "Two units have 2 people and one has 3, so the building has 7 people and an average of 2.33 per unit. With a sample quarterly bill of $420:",
+        units: [
+          { unit: "2 people", calc: "At or below average", charge: "$0" },
+          { unit: "2 people", calc: "At or below average", charge: "$0" },
+          { unit: "3 people", calc: "$420 × (3 − 2.33) ÷ 7", charge: "$40 per quarter" },
+        ],
+        note: "If every unit has the same number of people, nobody pays anything extra.",
+      },
+    },
+  },
+
   ideal: {
     lede: [
       "We want to communicate what's important to us so we can have a constructive long-term relationship where everyone stays happy. We're also interested in what's important to you, so feel free to chat with us about it!",

@@ -13,6 +13,7 @@ export const metadata: Metadata = {
 
 const SECTIONS = [
   { id: "selected", label: "Getting selected" },
+  { id: "utilities", label: "Utilities & bills" },
   { id: "ideal", label: "Our ideal tenant" },
   { id: "faq", label: "FAQ" },
   { id: "about", label: "About us" },
@@ -77,6 +78,34 @@ export default async function GuidePage() {
             ))}
           </ol>
           <a className={`${s.btn} ${s.btnPrimary}`} href="/showings">See units and book a showing <i className="bi bi-arrow-right"></i></a>
+        </section>
+
+        <section id="utilities" className={`${s.section} ${g.block}`}>
+          <span className={g.kicker}>What's included</span>
+          <h2 className={g.h2}>Utilities &amp; bills</h2>
+          <div className={g.utilGrid}>
+            <div className={g.utilCard}>
+              <b><i className="bi bi-check-circle"></i> Included in rent</b>
+              <ul>{GUIDE.utilities.included.map(u => <li key={u}>{u}</li>)}</ul>
+            </div>
+            <div className={g.utilCard}>
+              <b><i className="bi bi-lightning-charge"></i> Paid by you</b>
+              <ul>{GUIDE.utilities.notIncluded.map(u => <li key={u.name}><strong>{u.name}.</strong> {u.note}</li>)}</ul>
+            </div>
+          </div>
+          <h3 className={g.h3}>How water works</h3>
+          <p className={g.p}>{GUIDE.utilities.water.summary}</p>
+          <div className={g.formula}>{GUIDE.utilities.water.formula}</div>
+          <p className={g.p}>{GUIDE.utilities.water.example.setup}</p>
+          <table className={g.calcTable}>
+            <thead><tr><th>Unit</th><th>Calculation</th><th>Water charge</th></tr></thead>
+            <tbody>
+              {GUIDE.utilities.water.example.units.map((u, i) => (
+                <tr key={i}><td>{u.unit}</td><td>{u.calc}</td><td><b>{u.charge}</b></td></tr>
+              ))}
+            </tbody>
+          </table>
+          <p className={g.small}>{GUIDE.utilities.water.example.note}</p>
         </section>
 
         <section id="ideal" className={`${s.section} ${g.block}`}>

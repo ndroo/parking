@@ -396,3 +396,53 @@
   .lbNav { top: auto; bottom: 10px; transform: none; width: 44px; height: 44px; }
   .lbCaption { padding: 0 56px; font-size: 14px; }
 }
+
+/* Utilities */
+.h3 { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; margin: 22px 0 6px; }
+
+.utilGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 560px) { .utilGrid { grid-template-columns: 1fr; } }
+
+.utilCard {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px 16px;
+}
+
+.utilCard b { display: flex; gap: 8px; align-items: center; font-size: 15px; }
+.utilCard b i { color: var(--accent); }
+.utilCard ul { margin: 8px 0 0; padding-left: 20px; font-size: 14.5px; line-height: 1.55; color: var(--muted); }
+.utilCard strong { color: var(--ink); font-weight: 650; }
+
+.formula {
+  margin: 4px 0 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--accent-soft);
+  border-left: 4px solid var(--accent);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.calcTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.calcTable th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 8px 8px 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.calcTable td { padding: 10px 8px 10px 0; border-bottom: 1px solid var(--line); }
+.calcTable td:last-child, .calcTable th:last-child { text-align: right; padding-right: 0; }
