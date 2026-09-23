@@ -2,6 +2,8 @@ import nodemailer from "nodemailer";
 import { DateTime } from "luxon";
 import { APP_TZ, BOOKING_OWNER_EMAIL } from "@/lib/config";
 import { BUILDING_ADDRESS, SHOWING_CONTACT, ShowingUnit } from "@/lib/showingUnits";
+import { getListing } from "@/lib/listingai";
+import { EmailContent, renderEmail } from "@/lib/emailTemplate";
 
 // Sends mail from the owner's Gmail using an app password. When the env vars
 // are missing, emails are skipped (logged) so bookings still work.
@@ -12,37 +14,36 @@ const transport = GMAIL_APP_PASSWORD
   ? nodemailer.createTransport({ service: "gmail", auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD } })
   : null;
 
-interface Mail {
+export interface OutgoingEmail {
   to: string;
   subject: string;
-  lines: string[];
   replyTo?: string;
+  content: EmailContent;
 }
 
-async function send({ to, subject, lines, replyTo }: Mail): Promise<void> {
+async function send(mail: OutgoingEmail): Promise<void> {
   if (!transport) {
-    console.log(`[notify] GMAIL_APP_PASSWORD not set; skipped "${subject}" to ${to}`);
+    console.log(`[notify] GMAIL_APP_PASSWORD not set; skipped "${mail.subject}" to ${mail.to}`);
     return;
   }
-  const text = lines.join("\n");
-  const html = `<div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;color:#1d1a16">${lines
-    .map(l => (l ? `<p style="margin:0 0 10px">${escapeHtml(l).replace(/(https?:\/\/\S+)/g, '<a href="$1" style="color:#b24a26">$1</a>')}</p>` : ""))
-    .join("")}</div>`;
+  const { html, text } = renderEmail(mail.content);
   try {
-    await transport.sendMail({ from: `"180 Beatrice" <${GMAIL_USER}>`, to, subject, text, html, replyTo });
+    await transport.sendMail({ from: `"180 Beatrice" <${GMAIL_USER}>`, to: mail.to, subject: mail.subject, html, text, replyTo: mail.replyTo });
   } catch (e) {
     // Never fail a booking because an email didn't send
-    console.error(`[notify] failed "${subject}" to ${to}`, e);
+    console.error(`[notify] failed "${mail.subject}" to ${mail.to}`, e);
   }
 }
 
-function escapeHtml(s: string) {
-  return s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
-}
+const dt = (iso: string) => DateTime.fromISO(iso).setZone(APP_TZ);
+const longDay = (iso: string) => dt(iso).toFormat("cccc, LLLL d");
+const time = (iso: string) => dt(iso).toFormat("h:mm a");
+const range = (a: string, b: string) => `${time(a)} - ${time(b)}`;
+const short = (iso: string) => dt(iso).toFormat("ccc LLL d, h:mm a");
+const FOOTER = `180 Beatrice St, Toronto · Sent by the 180 Beatrice booking page`;
+const contactBlock = (text: string) => ({ text, phone: SHOWING_CONTACT.phone, email: SHOWING_CONTACT.email });
 
-const when = (iso: string) => DateTime.fromISO(iso).setZone(APP_TZ).toFormat("cccc, LLLL d 'at' h:mm a");
-
-interface ShowingInfo {
+export interface ShowingInfo {
   unit: ShowingUnit;
   ref: string;
   name: string;
@@ -53,99 +54,153 @@ interface ShowingInfo {
   manageUrl: string;
 }
 
-const contactLine = () => `Can't make it? Please call or text ${SHOWING_CONTACT.name} at ${SHOWING_CONTACT.phone} as early as you can, or reply to this email.`;
+export type ShowingEvent = "booked" | "moved" | "cancelled";
 
-export async function notifyShowing(kind: "booked" | "moved" | "cancelled", b: ShowingInfo, previousStartIso?: string) {
+// Builds (without sending) the visitor and owner emails for a showing event
+export function buildShowingEmails(kind: ShowingEvent, b: ShowingInfo, photoUrl?: string, previousStartIso?: string): OutgoingEmail[] {
   const place = `${b.unit.label}, ${BUILDING_ADDRESS}`;
   const first = b.name.split(/\s+/)[0];
-  const visitor: Record<typeof kind, Mail> = {
+  const endIso = dt(b.startIso).plus({ minutes: b.unit.slotMinutes }).toISO()!;
+  const when = { eyebrow: longDay(b.startIso), big: range(b.startIso, endIso), sub: place };
+  const reminders = [
+    ...(b.pet ? [`You mentioned a pet (${b.pet}). Please bring them along, we'd love to meet them.`] : []),
+    ...b.unit.facts.filter(f => !(b.pet && /pet/i.test(f.title))).map(f => `${f.title}: ${f.body}`),
+  ];
+
+  const visitor: Record<ShowingEvent, EmailContent> = {
     booked: {
-      to: b.email,
-      subject: `Showing confirmed: ${place}, ${when(b.startIso)}`,
-      lines: [
-        `Hi ${first},`,
-        `You're booked to see ${place} on ${when(b.startIso)} (15 minutes).`,
-        `Reference code: ${b.ref}`,
-        b.pet ? `Please bring ${b.pet.toLowerCase().startsWith("my ") ? b.pet : `your pet (${b.pet})`} along, we'd love to meet them.` : "",
-        `Listing: ${b.unit.listingUrl}`,
-        `To change or cancel your time: ${b.manageUrl}`,
-        contactLine(),
-        `See you soon,`,
-        SHOWING_CONTACT.name,
+      preheader: `${longDay(b.startIso)} at ${time(b.startIso)}. Reference ${b.ref}.`,
+      photoUrl,
+      badge: { text: "Showing confirmed", tone: "ok" },
+      title: `You're booked, ${first}.`,
+      intro: `Looking forward to meeting you. Here are your showing details; keep this email handy.`,
+      when,
+      refCode: b.ref,
+      buttons: [
+        { label: "Manage my booking", href: b.manageUrl, primary: true },
+        { label: "View the listing", href: b.unit.listingUrl },
       ],
+      notes: { title: "Before you visit", items: reminders },
+      contact: contactBlock(`Can't make it or running late? Please let ${SHOWING_CONTACT.name} know as early as you can so someone else can take your spot.`),
+      footer: FOOTER,
     },
     moved: {
-      to: b.email,
-      subject: `Showing moved: ${place}, ${when(b.startIso)}`,
-      lines: [
-        `Hi ${first},`,
-        `Your showing of ${place} is now on ${when(b.startIso)}${previousStartIso ? ` (was ${when(previousStartIso)})` : ""}.`,
-        `Reference code: ${b.ref}`,
-        `Manage your booking: ${b.manageUrl}`,
-        contactLine(),
-        SHOWING_CONTACT.name,
-      ],
+      preheader: `Now ${longDay(b.startIso)} at ${time(b.startIso)}.`,
+      photoUrl,
+      badge: { text: "Time changed", tone: "accent" },
+      title: `Your showing has moved, ${first}.`,
+      intro: `No problem. Your new time is below and your reference code stays the same.`,
+      when: { ...when, struck: previousStartIso ? `${longDay(previousStartIso)}, ${time(previousStartIso)}` : undefined },
+      refCode: b.ref,
+      buttons: [{ label: "Manage my booking", href: b.manageUrl, primary: true }],
+      contact: contactBlock(`Questions? Reach ${SHOWING_CONTACT.name} any time.`),
+      footer: FOOTER,
     },
     cancelled: {
-      to: b.email,
-      subject: `Showing cancelled: ${place}`,
-      lines: [
-        `Hi ${first},`,
-        `Your showing of ${place} on ${when(b.startIso)} is cancelled. Thanks for letting us know.`,
-        `If you'd like to book another time: ${b.manageUrl}`,
-        SHOWING_CONTACT.name,
+      preheader: `Your ${longDay(b.startIso)} showing is cancelled.`,
+      badge: { text: "Cancelled", tone: "muted" },
+      title: `Your showing is cancelled.`,
+      intro: `Thanks for letting us know, ${first}. Your ${longDay(b.startIso)} ${time(b.startIso)} time has been released. If you'd still like to see ${b.unit.label}, you can book another time while spots are open.`,
+      buttons: [
+        { label: "Book another time", href: b.manageUrl, primary: true },
+        { label: "View the listing", href: b.unit.listingUrl },
       ],
+      contact: contactBlock(`Questions? Reach ${SHOWING_CONTACT.name} any time.`),
+      footer: FOOTER,
     },
   };
-  const verb = { booked: "New showing", moved: "Showing moved", cancelled: "Showing cancelled" }[kind];
-  const owner: Mail = {
-    to: BOOKING_OWNER_EMAIL,
-    replyTo: b.email,
-    subject: `${verb}: ${b.unit.label}, ${when(b.startIso)} - ${b.name}`,
-    lines: [
-      `${verb} for ${place}.`,
-      `When: ${when(b.startIso)}${previousStartIso ? ` (was ${when(previousStartIso)})` : ""}`,
-      `Name: ${b.name}`,
-      `Phone: ${b.phone}`,
-      `Email: ${b.email}`,
-      `Pet: ${b.pet || "None"}`,
-      `Reference: ${b.ref}`,
-    ],
+
+  const subjects: Record<ShowingEvent, [string, string]> = {
+    booked: [`Showing confirmed: ${b.unit.label}, ${short(b.startIso)}`, `New showing: ${b.unit.label}, ${short(b.startIso)} - ${b.name}`],
+    moved: [`Showing moved: ${b.unit.label}, ${short(b.startIso)}`, `Showing moved: ${b.unit.label}, ${short(b.startIso)} - ${b.name}`],
+    cancelled: [`Showing cancelled: ${b.unit.label}, ${short(b.startIso)}`, `Showing cancelled: ${b.unit.label}, ${short(b.startIso)} - ${b.name}`],
   };
-  await Promise.all([send(visitor[kind]), send(owner)]);
+  const ownerTitle = { booked: `New showing: ${b.name}`, moved: `${b.name} moved their showing`, cancelled: `${b.name} cancelled` }[kind];
+
+  const owner: EmailContent = {
+    preheader: `${b.unit.label} · ${short(b.startIso)} · ${b.phone}`,
+    badge: { text: { booked: "New booking", moved: "Rescheduled", cancelled: "Cancelled" }[kind], tone: kind === "cancelled" ? "muted" : kind === "moved" ? "accent" : "ok" },
+    title: ownerTitle,
+    when: kind === "cancelled"
+      ? { eyebrow: "Released", big: `${longDay(b.startIso)}`, sub: `${range(b.startIso, endIso)} · ${place}` }
+      : { ...when, struck: previousStartIso ? `${longDay(previousStartIso)}, ${time(previousStartIso)}` : undefined },
+    rows: [
+      { label: "Name", value: b.name },
+      { label: "Phone", value: b.phone, href: `tel:${b.phone.replace(/[^\d+]/g, "")}` },
+      { label: "Email", value: b.email, href: `mailto:${b.email}` },
+      { label: "Pet", value: b.pet || "None" },
+      { label: "Reference", value: b.ref },
+    ],
+    buttons: [
+      { label: `Call ${b.name.split(/\s+/)[0]}`, href: `tel:${b.phone.replace(/[^\d+]/g, "")}`, primary: true },
+      { label: "Open admin", href: b.manageUrl.replace(/\/showings\/[^/]+$/, "/showings/admin") },
+    ],
+    footer: `Reply to this email to write to ${b.name}.`,
+  };
+
+  return [
+    { to: b.email, subject: subjects[kind][0], content: visitor[kind] },
+    { to: BOOKING_OWNER_EMAIL, replyTo: b.email, subject: subjects[kind][1], content: owner },
+  ];
 }
 
-export async function notifyParkingBooked(p: { spot: string; ref: string; name: string; email: string; phone: string; plate: string; startIso: string; endIso: string; price: string; manageUrl: string }) {
+export async function notifyShowing(kind: ShowingEvent, b: ShowingInfo, previousStartIso?: string) {
+  const listing = kind === "cancelled" ? null : await getListing(b.unit.listingId);
+  await Promise.all(buildShowingEmails(kind, b, listing?.photos[0]?.url, previousStartIso).map(send));
+}
+
+export interface ParkingInfo {
+  spot: string; ref: string; name: string; email: string; phone: string; plate: string;
+  startIso: string; endIso: string; price: string; manageUrl: string;
+}
+
+export function buildParkingEmails(p: ParkingInfo): OutgoingEmail[] {
   const spot = p.spot.charAt(0).toUpperCase() + p.spot.slice(1);
-  const range = `${when(p.startIso)} to ${when(p.endIso)}`;
-  await Promise.all([
-    send({
+  const when = { eyebrow: `${spot} spot · ${BUILDING_ADDRESS}`, big: `${short(p.startIso)}`, sub: `until ${short(p.endIso)}` };
+  return [
+    {
       to: p.email,
-      subject: `Parking confirmed: ${spot} spot, ${BUILDING_ADDRESS}`,
-      lines: [
-        `Hi ${p.name.split(/\s+/)[0]},`,
-        `Your ${spot} parking spot at ${BUILDING_ADDRESS} is booked from ${range}.`,
-        `Plate: ${p.plate}`,
-        `Reference code: ${p.ref}`,
-        `Total: ${p.price}. Please pay by e-transfer to ${BOOKING_OWNER_EMAIL}.`,
-        `Change or cancel: ${p.manageUrl}`,
-        SHOWING_CONTACT.name,
-      ],
-    }),
-    send({
+      subject: `Parking confirmed: ${spot} spot, ${short(p.startIso)}`,
+      content: {
+        preheader: `${spot} spot from ${short(p.startIso)}. Reference ${p.ref}.`,
+        badge: { text: "Parking confirmed", tone: "ok" },
+        title: `You're all set, ${p.name.split(/\s+/)[0]}.`,
+        intro: `Your parking spot is reserved. Please send payment by e-transfer to ${BOOKING_OWNER_EMAIL}.`,
+        when,
+        refCode: p.ref,
+        rows: [
+          { label: "Plate", value: p.plate },
+          { label: "Total", value: p.price },
+          { label: "Pay to", value: BOOKING_OWNER_EMAIL },
+        ],
+        buttons: [{ label: "Change or cancel", href: p.manageUrl, primary: true }],
+        contact: contactBlock(`Someone in your spot or need help?`),
+        footer: FOOTER,
+      },
+    },
+    {
       to: BOOKING_OWNER_EMAIL,
       replyTo: p.email,
       subject: `New parking booking: ${spot}, ${p.plate} - ${p.name}`,
-      lines: [
-        `New ${spot} parking booking.`,
-        `When: ${range}`,
-        `Name: ${p.name}`,
-        `Phone: ${p.phone}`,
-        `Email: ${p.email}`,
-        `Plate: ${p.plate}`,
-        `Total: ${p.price}`,
-        `Reference: ${p.ref}`,
-      ],
-    }),
-  ]);
+      content: {
+        preheader: `${spot} · ${short(p.startIso)} to ${short(p.endIso)} · ${p.price}`,
+        badge: { text: "New parking booking", tone: "ok" },
+        title: `${p.name} booked the ${spot} spot`,
+        when,
+        rows: [
+          { label: "Name", value: p.name },
+          { label: "Phone", value: p.phone, href: `tel:${p.phone.replace(/[^\d+]/g, "")}` },
+          { label: "Email", value: p.email, href: `mailto:${p.email}` },
+          { label: "Plate", value: p.plate },
+          { label: "Total", value: p.price },
+          { label: "Reference", value: p.ref },
+        ],
+        footer: `Reply to this email to write to ${p.name}.`,
+      },
+    },
+  ];
+}
+
+export async function notifyParkingBooked(p: ParkingInfo) {
+  await Promise.all(buildParkingEmails(p).map(send));
 }
