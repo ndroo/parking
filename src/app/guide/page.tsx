@@ -111,10 +111,9 @@ export default async function GuidePage() {
               <ul>{GUIDE.utilities.notIncluded.map(u => <li key={u.name}><strong>{u.name}.</strong> {u.note}</li>)}</ul>
             </div>
           </div>
-          <h3 className={g.h3}>How water works</h3>
+          <h3 className={g.h3}>Water</h3>
           <p className={g.p}>{GUIDE.utilities.water.summary}</p>
-          <div className={g.formula}>{GUIDE.utilities.water.formula}</div>
-          <WaterCalculator initialBill={GUIDE.utilities.water.example.bill} initialOccupants={GUIDE.utilities.water.example.occupants} included={GUIDE.utilities.water.included} />
+          <WaterCalculator {...GUIDE.utilities.water.example} includedAdults={GUIDE.utilities.water.includedAdults} />
           <p className={g.small}>{GUIDE.utilities.water.example.note}</p>
         </section>
 

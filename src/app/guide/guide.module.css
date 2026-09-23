@@ -549,3 +549,28 @@
 
 .docGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 @media (max-width: 560px) { .docGrid { grid-template-columns: 1fr; } }
+
+.calcInputs3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.3fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+@media (max-width: 640px) {
+  .calcInputs3 { grid-template-columns: 1fr 1fr; }
+  .calcInputs3 > :last-child { grid-column: 1 / -1; }
+}
+
+.calcResult {
+  display: grid;
+  gap: 2px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.calcResult span { font-size: 12.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.calcResult b { font-size: 26px; letter-spacing: -0.02em; color: var(--accent); font-variant-numeric: tabular-nums; }
+.calcResult small { font-size: 13px; line-height: 1.5; color: var(--muted); }

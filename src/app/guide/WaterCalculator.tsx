@@ -4,71 +4,68 @@ import g from "./guide.module.css";
 
 const money = (n: number) => n.toLocaleString("en-CA", { style: "currency", currency: "CAD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-// Interactive version of the water proration example in the guide
-export default function WaterCalculator({ initialBill, initialOccupants, included }: { initialBill: number; initialOccupants: number[]; included: number }) {
-  const [bill, setBill] = useState(String(initialBill));
-  const [people, setPeople] = useState(initialOccupants.map(String));
+function Stepper({ label, value, onChange, min = 0, max = 20 }: { label: string; value: number; onChange: (n: number) => void; min?: number; max?: number }) {
+  return (
+    <label className={g.calcField}>
+      <span>{label}</span>
+      <div className={g.stepper}>
+        <button type="button" onClick={() => onChange(Math.max(min, value - 1))} aria-label={`Decrease ${label}`}>−</button>
+        <input inputMode="numeric" value={value} onChange={e => onChange(Math.min(max, Math.max(min, Number(e.target.value.replace(/\D/g, "")) || 0)))} aria-label={label} />
+        <button type="button" onClick={() => onChange(Math.min(max, value + 1))} aria-label={`Increase ${label}`}>+</button>
+      </div>
+    </label>
+  );
+}
+
+// Rough estimate of a household's monthly water charge, agreed at lease signing
+export default function WaterCalculator({ quarterlyBill, yourAdults, otherAdults, includedAdults, note }: {
+  quarterlyBill: number; yourAdults: number; otherAdults: number; includedAdults: number; note: string;
+}) {
+  const [bill, setBill] = useState(String(quarterlyBill));
+  const [yours, setYours] = useState(yourAdults);
+  const [others, setOthers] = useState(otherAdults);
 
   const billNum = Math.max(0, Number(bill) || 0);
-  const counts = people.map(p => Math.max(0, Math.floor(Number(p) || 0)));
-  const total = counts.reduce((a, b) => a + b, 0);
-  // Each person above the included allowance pays their per-person share; no credits below it
-  const rows = counts.map(n => {
-    const above = Math.max(0, n - included);
-    const charge = total > 0 ? (billNum * above) / total : 0;
-    return { n, above, charge };
-  });
-  const charged = rows.reduce((a, r) => a + r.charge, 0);
-  const changed = billNum !== initialBill || counts.some((c, i) => c !== initialOccupants[i]);
+  const totalAdults = yours + others;
+  const extra = Math.max(0, yours - includedAdults);
+  const perAdultMonthly = totalAdults > 0 ? billNum / 3 / totalAdults : 0;
+  const monthly = extra * perAdultMonthly;
+  const changed = billNum !== quarterlyBill || yours !== yourAdults || others !== otherAdults;
 
   return (
     <div className={g.calc}>
       <div className={g.calcHead}>
         <span className={g.calcBadge}>Example</span>
-        <span className={g.calcHint}>Try your own numbers</span>
+        <span className={g.calcHint}>Estimate a monthly water charge</span>
         {changed && (
-          <button type="button" className={g.calcReset} onClick={() => { setBill(String(initialBill)); setPeople(initialOccupants.map(String)); }}>
+          <button type="button" className={g.calcReset} onClick={() => { setBill(String(quarterlyBill)); setYours(yourAdults); setOthers(otherAdults); }}>
             Reset
           </button>
         )}
       </div>
 
-      <div className={g.calcInputs}>
+      <div className={g.calcInputs3}>
+        <Stepper label="Adults in your unit" value={yours} onChange={setYours} />
+        <Stepper label="Adults in other units" value={others} onChange={setOthers} />
         <label className={g.calcField}>
-          <span>Quarterly water bill</span>
+          <span>Building water bill (quarterly)</span>
           <div className={g.calcMoney}>
             <i>$</i>
-            <input inputMode="decimal" value={bill} onChange={e => setBill(e.target.value.replace(/[^\d.]/g, ""))} aria-label="Quarterly water bill in dollars" />
+            <input inputMode="decimal" value={bill} onChange={e => setBill(e.target.value.replace(/[^\d.]/g, ""))} aria-label="Building water bill per quarter in dollars" />
           </div>
         </label>
-        {people.map((p, i) => (
-          <label key={i} className={g.calcField}>
-            <span>Unit {i + 1} people</span>
-            <div className={g.stepper}>
-              <button type="button" onClick={() => setPeople(ps => ps.map((x, j) => (j === i ? String(Math.max(0, (Number(x) || 0) - 1)) : x)))} aria-label={`Fewer people in Unit ${i + 1}`}>−</button>
-              <input inputMode="numeric" value={p} onChange={e => setPeople(ps => ps.map((x, j) => (j === i ? e.target.value.replace(/\D/g, "").slice(0, 2) : x)))} aria-label={`People in Unit ${i + 1}`} />
-              <button type="button" onClick={() => setPeople(ps => ps.map((x, j) => (j === i ? String(Math.min(20, (Number(x) || 0) + 1)) : x)))} aria-label={`More people in Unit ${i + 1}`}>+</button>
-            </div>
-          </label>
-        ))}
       </div>
 
-      <p className={g.calcSummary}>
-        {total} {total === 1 ? "person" : "people"} in the building. Water is included for {included} per unit, and we cover <b>{money(Math.max(0, billNum - charged))}</b> of this bill.
-      </p>
-
-      <table className={g.calcTable}>
-        <thead><tr><th>Unit</th><th>Calculation</th><th>Water charge</th></tr></thead>
-        <tbody>
-          {rows.map((r, i) => (
-            <tr key={i}>
-              <td>Unit {i + 1} ({r.n})</td>
-              <td>{r.charge > 0 ? `${money(billNum)} × (${r.n} − ${included}) ÷ ${total}` : `${included} or fewer people`}</td>
-              <td><b>{r.charge > 0 ? `${money(r.charge)}/qtr` : "$0"}</b></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className={g.calcResult}>
+        <span>Estimated water charge</span>
+        <b>{monthly > 0 ? `${money(monthly)}/month` : "Included"}</b>
+        <small>
+          {monthly > 0
+            ? `${extra} adult${extra === 1 ? "" : "s"} above ${includedAdults} × ${money(perAdultMonthly)} (each adult's monthly share: ${money(billNum)} ÷ 3 months ÷ ${totalAdults} adults)`
+            : `Water is included for up to ${includedAdults} adults.`}
+        </small>
+      </div>
+      <p className={g.small}>{note}</p>
     </div>
   );
 }

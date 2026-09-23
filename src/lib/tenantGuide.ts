@@ -46,19 +46,19 @@ export const GUIDE = {
   },
 
   utilities: {
-    included: ["Heat", "Water (see below)"],
+    included: ["Heat", "Water, for households of up to 2 adults (see below)"],
     notIncluded: [
       { name: "Hydro", note: "Each unit has its own meter, typically $50-125/month depending on usage." },
       { name: "Internet", note: "Set up your own plan. The house is wired for both fibre optic and cable internet, so you can pick the provider you like." },
     ],
     water: {
-      included: 2,
-      summary: "Water is included in your rent for up to 2 people per unit. Once a year we review how many people live in each unit. For each person above 2, the unit pays that person's share of the building's water bill, calculated each quarter when the bill arrives. Units with fewer than 2 people don't get a credit.",
-      formula: "Your share = Quarterly bill × (Your unit's occupants − 2) ÷ Total occupants in the building",
+      includedAdults: 2,
+      summary: "We set water terms when you sign your lease, based on the number of occupants 18 and over living in the unit. Water is included for households of up to 2 adults. For larger households, we agree a fixed monthly water charge in the lease. If the number of adults changes during the lease, the lease allows either of us to reassess it.",
       example: {
-        bill: 420,
-        occupants: [2, 2, 3],
-        note: "If every unit has 2 or fewer people, nobody pays anything extra. Figures are illustrative; actual bills vary by season and usage.",
+        quarterlyBill: 420,
+        yourAdults: 3,
+        otherAdults: 4,
+        note: "This is only an estimate to give you a feel for it. It shares the building's water bill evenly per adult, for adults above 2 in your unit. The actual amount is agreed with you before signing.",
       },
     },
   },
