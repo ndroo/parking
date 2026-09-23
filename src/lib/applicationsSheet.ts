@@ -108,6 +108,24 @@ export async function listApplications(unit: ShowingUnit): Promise<SheetApplicat
   }).filter(a => a.name || a.email).reverse();
 }
 
+// Appends a new application as a row, matching the Sheet's existing columns.
+// Values are written RAW so nothing an applicant types is treated as a formula.
+export async function appendApplication(unit: ShowingUnit, values: Partial<Record<keyof SheetApplication, string>>): Promise<void> {
+  const { cfg, header } = await readAll(unit);
+  if (!header.length) throw new Error("The application sheet has no header row");
+  const row = header.map(h => {
+    const k = h.trim().toLowerCase();
+    if (k === "email address") return values.email || "";
+    const match = FIELDS.find(([, prefix]) => k.startsWith(prefix));
+    return match ? values[match[0]] || "" : "";
+  });
+  const range = `${cfg.sheetName}!A1`;
+  await api(`${cfg.spreadsheetId}/values/${encodeURIComponent(range)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, {
+    method: "POST",
+    body: JSON.stringify({ values: [row] }),
+  });
+}
+
 // Writes the status for one row, after checking the row still belongs to that email
 export async function setApplicationStatus(unit: ShowingUnit, row: number, email: string, status: ApplicationStatus): Promise<void> {
   const { cfg, header, rows } = await readAll(unit);

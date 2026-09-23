@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { isAdmin } from "@/lib/showings";
+import { cancelShowing, isAdmin, listShowings } from "@/lib/showings";
 import { getUnit } from "@/lib/showingUnits";
 import { listApplications, setApplicationStatus } from "@/lib/applicationsSheet";
 import { getListing } from "@/lib/listingai";
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
 // POST { unit, row, email, status, sendDecline?, message? }
 export async function POST(req: NextRequest) {
   if (!isAdmin(req.headers.get("x-admin-key"))) return json({ error: "Unauthorized" }, 401);
-  const { unit: slug, row, email, name, status, sendDecline, message } = await req.json();
+  const { unit: slug, row, email, name, status, sendDecline, message, cancelBooking } = await req.json();
   const unit = getUnit(slug);
   if (!unit?.applicationSheet) return json({ error: "No application sheet for this unit" }, 400);
   if (!["New", "Approved", "Declined"].includes(status)) return json({ error: "Bad status" }, 400);
@@ -38,7 +38,13 @@ export async function POST(req: NextRequest) {
       if (!ok) return json({ error: "The decline email didn't send, so the status wasn't changed." }, 502);
     }
     await setApplicationStatus(unit, Number(row), email, status);
-    return json({ ok: true });
+    // Optionally free up any showing they had booked for this unit
+    let cancelled = 0;
+    if (status === "Declined" && cancelBooking) {
+      const mine = (await listShowings(unit)).filter(b => b.email.toLowerCase() === String(email).toLowerCase());
+      for (const b of mine) { await cancelShowing(b.eventId); cancelled++; }
+    }
+    return json({ ok: true, cancelled });
   } catch (e: any) {
     return json({ error: e.message }, 500);
   }

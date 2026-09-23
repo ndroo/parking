@@ -3,6 +3,7 @@ import { DateTime } from "luxon";
 import { getUnit } from "@/lib/showingUnits";
 import { notifyApplication } from "@/lib/notify";
 import type { Application } from "@/lib/applications";
+import { appendApplication } from "@/lib/applicationsSheet";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,7 +18,7 @@ const clip = (v: unknown, n = 2000) => String(v ?? "").trim().slice(0, n);
 // Posts the on-site application into the unit's Google Form so it lands in the same Sheet
 export async function POST(req: NextRequest, { params }: Ctx) {
   const unit = getUnit((await params).unit);
-  if (!unit?.applicationForm) return json({ error: "Applications aren't open for this unit" }, 404);
+  if (!unit?.applicationSheet || !unit.bookable) return json({ error: "Applications aren't open for this unit" }, 404);
   const body = await req.json().catch(() => null);
   if (!body) return json({ error: "Invalid request" }, 400);
 
@@ -45,34 +46,21 @@ export async function POST(req: NextRequest, { params }: Ctx) {
     .map(o => [o.name, o.dob && `born ${o.dob}`, o.address, o.income, o.amount && `${o.amount} last year`].filter(Boolean).join("; "))
     .join("\n");
   const otherText = [a.parking === "Yes" ? "Interested in a parking spot." : "", a.other].filter(Boolean).join("\n\n");
-  const d = DateTime.fromISO(a.moveIn);
 
-  const e = unit.applicationForm.entries;
-  const form = new URLSearchParams({
-    [`entry.${e.name}`]: a.name, [`entry.${e.email}`]: a.email, [`entry.${e.phone}`]: a.phone,
-    [`entry.${e.occupants}`]: occupantsText,
-    [`entry.${e.moveIn}_year`]: String(d.year), [`entry.${e.moveIn}_month`]: String(d.month), [`entry.${e.moveIn}_day`]: String(d.day),
-    [`entry.${e.attracted}`]: a.attracted, [`entry.${e.whyMoving}`]: a.whyMoving,
-    [`entry.${e.consentComms}`]: a.consentComms, [`entry.${e.consentCredit}`]: a.consentCredit,
-    [`entry.${e.pets}`]: a.pets, [`entry.${e.references}`]: a.references, [`entry.${e.insurance}`]: a.insurance,
-    [`entry.${e.other}`]: otherText, emailAddress: a.email,
-  });
-
-  // Save into the Google Form's Sheet; the full application is also emailed to
-  // the owner, so a Sheet failure alone doesn't lose anything.
+  // Save a new row in the unit's responses Sheet; the full application is
+  // also emailed to the owner, so a Sheet failure alone doesn't lose anything.
   let savedToSheet = false;
   try {
-    const res = await fetch(`https://docs.google.com/forms/d/e/${unit.applicationForm.formId}/formResponse`, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: form.toString(),
-      redirect: "follow",
+    await appendApplication(unit, {
+      submittedAt: DateTime.now().setZone("America/Toronto").toFormat("M/d/yyyy H:mm:ss"),
+      name: a.name, email: a.email, phone: a.phone, occupants: occupantsText,
+      moveIn: DateTime.fromISO(a.moveIn).toFormat("M/d/yyyy"),
+      attracted: a.attracted, whyMoving: a.whyMoving, consentComms: a.consentComms, consentCredit: a.consentCredit,
+      pets: a.pets, references: a.references, insurance: a.insurance, other: otherText,
     });
-    const text = await res.text();
-    savedToSheet = res.ok && /freebirdFormviewerViewResponseConfirmationMessage|Your response has been recorded/i.test(text);
-    if (!savedToSheet) console.error("apply: Google Form rejected submission", res.status, text.slice(0, 300));
+    savedToSheet = true;
   } catch (err) {
-    console.error("apply: Google Form request failed", err);
+    console.error("apply: saving to the sheet failed", err);
   }
 
   const emailed = await notifyApplication(unit, a, occupantsText, `${req.nextUrl.origin}/showings/admin`, savedToSheet);

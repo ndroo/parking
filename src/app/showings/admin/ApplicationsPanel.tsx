@@ -20,14 +20,18 @@ function declineText(unitLabel: string, name: string, phone: string) {
   return `Hi ${first},\n\nThanks for taking the time to apply for ${unitLabel} at 180 Beatrice. We've had a lot of interest, and after reviewing applications we won't be moving forward with yours this time.\n\nWe really appreciate your interest, and wish you the best of luck with your search.\n\nThanks,\nAndrew\n${phone}`;
 }
 
-export default function ApplicationsPanel({ adminKey, refreshKey, onInvite }: { adminKey: string; refreshKey: number; onInvite: (t: InviteTarget) => void }) {
+export interface PanelBooking { unit: string; startIso: string; email: string }
+
+export default function ApplicationsPanel({ adminKey, refreshKey, onInvite, bookings, onBookingsChanged }: {
+  adminKey: string; refreshKey: number; onInvite: (t: InviteTarget) => void; bookings: PanelBooking[]; onBookingsChanged: () => void;
+}) {
   const [unitSlug, setUnitSlug] = useState(units[0]?.slug || "");
   const [apps, setApps] = useState<AdminApplication[] | null>(null);
   const [rent, setRent] = useState<number | null>(null);
   const [filter, setFilter] = useState<"All" | "New" | "Approved" | "Declined">("New");
   const [error, setError] = useState("");
   const [open, setOpen] = useState<number | null>(null);
-  const [decline, setDecline] = useState<{ app: AdminApplication; message: string; send: boolean } | null>(null);
+  const [decline, setDecline] = useState<{ app: AdminApplication; message: string; send: boolean; cancelBooking: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const unit = units.find(u => u.slug === unitSlug);
   const headers = { "Content-Type": "application/json", "x-admin-key": adminKey };
@@ -49,6 +53,7 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite }: { 
     setBusy(false);
     if (!res.ok) { alert(data.error || "Failed"); return false; }
     load();
+    if (data.cancelled) onBookingsChanged();
     return true;
   };
 
@@ -93,21 +98,21 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite }: { 
             return (
               <div key={a.row} className="card">
                 <div className="card-body py-3">
-                  <div className="d-flex flex-wrap justify-content-between gap-2">
-                    <div style={{ minWidth: 0 }}>
+                  <div className="app-row">
+                    <div className="app-info">
                       <div className="d-flex align-items-center gap-2 flex-wrap">
                         <b>{a.name || "(no name)"}</b>
                         <span className={`badge ${badge[a.status]}`}>{a.status}</span>
                         {parking && <span className="badge text-bg-light border">Parking</span>}
                       </div>
-                      <div className="small text-muted">
+                      <div className="small text-muted app-line">
                         Move-in {a.moveIn || "?"}
                         {a.detectedIncome ? <> · income ~{money(a.detectedIncome)}{ratio ? <b className={ratio >= 3 ? "text-success" : ratio >= 2.5 ? "text-warning-emphasis" : "text-danger"}> ({ratio.toFixed(1)}x rent)</b> : null}</> : " · income not detected"}
-                        {" · "}Pets: {a.pets.length > 40 ? a.pets.slice(0, 40) + "..." : a.pets || "?"}
+                        {" · "}Pets: {a.pets || "?"}
                       </div>
                       <div className="small text-muted">Applied {a.submittedAt}{a.statusUpdated ? ` · ${a.status} ${a.statusUpdated}` : ""}</div>
                     </div>
-                    <div className="d-flex gap-2 align-items-start flex-wrap">
+                    <div className="app-actions">
                       <button className="btn btn-sm btn-outline-secondary" onClick={() => setOpen(isOpen ? null : a.row)}>{isOpen ? "Hide" : "Details"}</button>
                       {a.status !== "Approved" && (
                         <button className="btn btn-sm btn-success" onClick={() => onInvite({ unit: unitSlug, name: a.name, email: a.email, phone: a.phone, row: a.row })}>
@@ -115,7 +120,7 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite }: { 
                         </button>
                       )}
                       {a.status !== "Declined" && (
-                        <button className="btn btn-sm btn-outline-danger" onClick={() => setDecline({ app: a, message: declineText(unit?.label || "the unit", a.name, "647-225-4909"), send: true })}>Decline</button>
+                        <button className="btn btn-sm btn-outline-danger" onClick={() => setDecline({ app: a, message: declineText(unit?.label || "the unit", a.name, "647-225-4909"), send: true, cancelBooking: true })}>Decline</button>
                       )}
                       {a.status !== "New" && <button className="btn btn-sm btn-link" onClick={() => setStatus(a, "New")}>Reset</button>}
                     </div>
@@ -147,6 +152,18 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite }: { 
             <div className="modal-content">
               <div className="modal-header"><h5 className="modal-title">Decline {decline.app.name}?</h5><button className="btn-close" onClick={() => setDecline(null)}></button></div>
               <div className="modal-body">
+                <p className="small text-muted mb-2">This marks their application as Declined in the Sheet. You can Reset it later.</p>
+                {(() => {
+                  const booked = bookings.filter(b => b.unit === unit?.code && b.email.toLowerCase() === decline.app.email.toLowerCase());
+                  if (!booked.length) return <p className="small mb-2">They don&apos;t have a showing booked.</p>;
+                  const when = booked.map(b => DateTime.fromISO(b.startIso).setZone("America/Toronto").toFormat("ccc LLL d, h:mm a")).join(", ");
+                  return (
+                    <div className="form-check mb-2">
+                      <input id="dec-cancel" className="form-check-input" type="checkbox" checked={decline.cancelBooking} onChange={e => setDecline({ ...decline, cancelBooking: e.target.checked })} />
+                      <label htmlFor="dec-cancel" className="form-check-label">Also cancel their showing on <b>{when}</b> (frees the slot)</label>
+                    </div>
+                  );
+                })()}
                 <div className="form-check mb-2">
                   <input id="dec-send" className="form-check-input" type="checkbox" checked={decline.send} onChange={e => setDecline({ ...decline, send: e.target.checked })} />
                   <label htmlFor="dec-send" className="form-check-label">Email them this note (from your Gmail)</label>
@@ -154,9 +171,9 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite }: { 
                 <textarea className="form-control" rows={10} value={decline.message} disabled={!decline.send} onChange={e => setDecline({ ...decline, message: e.target.value })} />
               </div>
               <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={() => setDecline(null)}>Cancel</button>
+                <button className="btn btn-secondary" onClick={() => setDecline(null)}>Keep as is</button>
                 <button className="btn btn-danger" disabled={busy} onClick={async () => {
-                  const ok = await setStatus(decline.app, "Declined", decline.send ? { sendDecline: true, message: decline.message } : {});
+                  const ok = await setStatus(decline.app, "Declined", { ...(decline.send ? { sendDecline: true, message: decline.message } : {}), cancelBooking: decline.cancelBooking });
                   if (ok) setDecline(null);
                 }}>{busy ? "Working..." : decline.send ? "Decline & send" : "Mark declined"}</button>
               </div>

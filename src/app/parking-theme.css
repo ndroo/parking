@@ -257,3 +257,15 @@
   .parking-theme .fc .fc-col-header-cell-cushion { font-size: 11.5px; padding: 6px 1px; }
   .parking-theme .fc .fc-toolbar-title { font-size: 17px; }
 }
+
+/* Admin application cards: details on the left (truncated), actions on the right */
+.parking-theme .app-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; align-items: start; }
+.parking-theme .app-info { min-width: 0; }
+.parking-theme .app-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.parking-theme .app-actions { display: flex; gap: 8px; align-items: center; justify-content: flex-end; flex-wrap: nowrap; }
+
+@media (max-width: 767.98px) {
+  .parking-theme .app-row { grid-template-columns: 1fr; }
+  .parking-theme .app-line { white-space: normal; }
+  .parking-theme .app-actions { justify-content: flex-start; flex-wrap: wrap; }
+}

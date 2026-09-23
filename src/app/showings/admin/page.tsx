@@ -51,7 +51,7 @@ export default function ShowingsAdmin() {
   }, []);
 
   const cancel = async (b: Booking) => {
-    if (!confirm(`Cancel ${b.name}'s showing? This frees the slot. They are not notified automatically.`)) return;
+    if (!confirm(`Cancel ${b.name}'s showing? This frees the slot, but doesn't change their application or email them.`)) return;
     const res = await fetch(`/api/showings/admin?id=${encodeURIComponent(b.eventId)}`, { method: "DELETE", headers: { "x-admin-key": key } });
     if (!res.ok) return alert((await res.json()).error || "Failed");
     load(key);
@@ -78,7 +78,7 @@ export default function ShowingsAdmin() {
           <a key={id} className="btn btn-sm btn-outline-secondary" href={`#${id}`}>{label}</a>
         ))}
       </nav>
-      <ApplicationsPanel adminKey={key} refreshKey={appsRefresh} onInvite={t => { setTarget({ ...t }); setTimeout(() => document.getElementById("invite")?.scrollIntoView({ behavior: "smooth" }), 50); }} />
+      <ApplicationsPanel adminKey={key} refreshKey={appsRefresh} bookings={bookings} onBookingsChanged={() => load(key)} onInvite={t => { setTarget({ ...t }); setTimeout(() => document.getElementById("invite")?.scrollIntoView({ behavior: "smooth" }), 50); }} />
       <InvitePanel adminKey={key} windows={windows} target={target} onSent={() => { setAppsRefresh(n => n + 1); load(key); }} />
       <div id="windows"><WindowsPanel adminKey={key} onChange={setWindows} /></div>
       <div id="bookings"></div>

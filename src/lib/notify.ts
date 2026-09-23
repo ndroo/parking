@@ -230,8 +230,8 @@ export async function notifyApplication(unit: ShowingUnit, a: Application, occup
         ],
         buttons: [{ label: "Invite to a showing", href: adminUrl, primary: true }],
         footer: savedToSheet
-          ? `Also saved to the Google Form responses sheet. Reply to this email to write to ${a.name}.`
-          : `NOT saved to the Google Form sheet (the form rejected it), so this email is the only copy. Reply to write to ${a.name}.`,
+          ? `Also saved to the applications sheet. Reply to this email to write to ${a.name}.`
+          : `NOT saved to the applications sheet (it failed), so this email is the only copy. Reply to write to ${a.name}.`,
       },
     }),
   ]);

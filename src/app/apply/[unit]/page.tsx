@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ApplyPage({ params }: Props) {
   const unit = getUnit((await params).unit);
-  if (!unit?.applicationForm || !unit.bookable) {
+  if (!unit?.applicationSheet || !unit.bookable) {
     return (
       <div className={s.page}>
         <div className={s.wrap} style={{ paddingTop: 80 }}>
