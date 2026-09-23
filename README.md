@@ -35,3 +35,10 @@ All times are in America/Toronto.
   - Southern: https://calendar.google.com/calendar/ical/1ee843883fb437c6ca407dcbb754f481a739775e2f2cf97d0863de3529ab9456%40group.calendar.google.com/private-79c21fb86f0727c51ddfa7e5660fde57/basic.ics
 - Bookings create a Google Calendar event with summary `[spot] PLATE (ref CODE)` and private extendedProperties `{ ref, plate, spot }`.
 - Tenants are shown the e-transfer address `andrewjohnmcgrath@gmail.com` after booking.
+
+### Showings (Unit 3)
+
+- `/showings`: public booking page, 15-min slots in the windows set in `src/lib/showings.ts` (`SHOWING_CONFIG`). Other visitors see first names only. One booking per email.
+- `/showings/admin?key=...`: full name/email/phone/pet with cancel.
+- Env: `CALENDAR_ID_SHOWINGS` (new calendar shared with the service account), `SHOWINGS_ADMIN_KEY`.
+- Double-booking is prevented by giving each slot a deterministic event id (`slotYYYYMMDDtHHMM`); a second insert returns 409.
