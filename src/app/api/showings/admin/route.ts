@@ -10,7 +10,8 @@ const json = (data: unknown, status = 200) =>
 export async function GET(req: NextRequest) {
   if (!isAdmin(req.headers.get("x-admin-key"))) return json({ error: "Unauthorized" }, 401);
   try {
-    return json({ bookings: await listShowings() });
+    // Includes recent past showings so applications can show who has already been
+    return json({ bookings: await listShowings(undefined, { includePast: true }) });
   } catch (e: any) {
     console.error("GET /api/showings/admin", e);
     return json({ error: e.message }, 500);

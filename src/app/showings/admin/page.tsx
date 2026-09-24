@@ -60,6 +60,9 @@ export default function ShowingsAdmin() {
     load(key);
   };
 
+  // The API includes recent past showings (for the applications list); the table shows upcoming ones
+  const upcoming = bookings.filter(b => DateTime.fromISO(b.startIso) >= DateTime.now().setZone(TZ).startOf("day"));
+
   if (!authed) {
     return (
       <div className="container py-5" style={{ maxWidth: 420 }}>
@@ -81,22 +84,22 @@ export default function ShowingsAdmin() {
         ))}
       </nav>
       <ApplicationsPanel adminKey={key} refreshKey={appsRefresh} bookings={bookings} onBookingsChanged={() => load(key)} onInvite={t => setTarget({ ...t })} />
-      {target && <InviteModal adminKey={key} target={target} windows={windows} onClose={() => setTarget(null)} onSent={() => { setAppsRefresh(n => n + 1); load(key); }} />}
+      {target && <InviteModal adminKey={key} target={target} windows={windows} reminder={target.reminder} onClose={() => setTarget(null)} onSent={() => { setAppsRefresh(n => n + 1); load(key); }} />}
       <InvitePanel adminKey={key} windows={windows} target={null} onSent={() => { setAppsRefresh(n => n + 1); load(key); }} />
       <div id="windows"><WindowsPanel adminKey={key} onChange={setWindows} /></div>
       <div id="bookings"></div>
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h1 className="h4 mb-0">Showings ({bookings.length})</h1>
+        <h1 className="h4 mb-0">Showings ({upcoming.length})</h1>
         <button className="btn btn-sm btn-outline-secondary" onClick={() => load(key)}><i className="bi bi-arrow-clockwise"></i> Refresh</button>
       </div>
-      {bookings.length === 0 && <p className="text-muted">No bookings yet.</p>}
+      {upcoming.length === 0 && <p className="text-muted">No upcoming bookings.</p>}
       <div className="table-responsive">
         <table className="table align-middle">
           <thead>
             <tr><th>Time</th><th>Unit</th><th>Name</th><th>Phone</th><th>Email</th><th>Pet</th><th>Ref</th><th></th></tr>
           </thead>
           <tbody>
-            {bookings.map(b => {
+            {upcoming.map(b => {
               const t = DateTime.fromISO(b.startIso).setZone(TZ);
               return (
                 <tr key={b.eventId}>

@@ -28,6 +28,7 @@ export interface SheetApplication {
   other: string;
   status: ApplicationStatus;
   statusUpdated: string;
+  reminded: string; // when a "book your showing" reminder was last sent
   detectedIncome: number | null; // rough sum of dollar amounts in the occupants answer
 }
 
@@ -104,6 +105,8 @@ export async function listApplications(unit: ShowingUnit): Promise<SheetApplicat
     const st = statusIdx >= 0 ? (r[statusIdx] || "").trim() : "";
     a.status = st === "Approved" ? "Invited" : (APPLICATION_STATUSES as string[]).includes(st) ? st : "New";
     a.statusUpdated = statusIdx >= 0 ? (r[statusIdx + 1] || "").trim() : "";
+    const remindedIdx = header.findIndex(h => h.trim().toLowerCase() === "reminded");
+    a.reminded = remindedIdx >= 0 ? (r[remindedIdx] || "").trim() : "";
     a.detectedIncome = detectIncome(a.occupants);
     return a as SheetApplication;
   }).filter(a => a.name || a.email).reverse();
@@ -127,14 +130,33 @@ export async function appendApplication(unit: ShowingUnit, values: Partial<Recor
   });
 }
 
-// Writes the status for one row, after checking the row still belongs to that email
-export async function setApplicationStatus(unit: ShowingUnit, row: number, email: string, status: ApplicationStatus): Promise<void> {
-  const { cfg, header, rows } = await readAll(unit);
-  const emailCol = header.findIndex(h => h.trim().toLowerCase().startsWith("primary contact email"));
-  const rowEmail = (rows[row - 1]?.[emailCol] || "").trim().toLowerCase();
+const stamp = () => new Date().toLocaleString("en-CA", { timeZone: "America/Toronto" });
+
+// Reads the sheet and checks the row still belongs to that email
+async function readRow(unit: ShowingUnit, row: number, email: string) {
+  const data = await readAll(unit);
+  const emailCol = data.header.findIndex(h => h.trim().toLowerCase().startsWith("primary contact email"));
+  const rowEmail = (data.rows[row - 1]?.[emailCol] || "").trim().toLowerCase();
   if (!rowEmail || rowEmail !== email.trim().toLowerCase()) throw new Error("The sheet has changed since this list loaded. Refresh and try again.");
+  return data;
+}
+
+// Writes the status for one row
+export async function setApplicationStatus(unit: ShowingUnit, row: number, email: string, status: ApplicationStatus): Promise<void> {
+  const { cfg, header } = await readRow(unit, row, email);
   const statusIdx = await ensureStatusColumns(unit, header);
-  const stamp = new Date().toLocaleString("en-CA", { timeZone: "America/Toronto" });
   const range = `${cfg.sheetName}!${colLetter(statusIdx)}${row}:${colLetter(statusIdx + 1)}${row}`;
-  await api(`${cfg.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`, { method: "PUT", body: JSON.stringify({ values: [[status, stamp]] }) });
+  await api(`${cfg.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`, { method: "PUT", body: JSON.stringify({ values: [[status, stamp()]] }) });
+}
+
+// Records when a showing reminder was sent, in a "Reminded" column added on first use
+export async function setApplicationReminded(unit: ShowingUnit, row: number, email: string): Promise<void> {
+  const { cfg, header } = await readRow(unit, row, email);
+  let idx = header.findIndex(h => h.trim().toLowerCase() === "reminded");
+  if (idx === -1) {
+    idx = Math.max(header.length, (await ensureStatusColumns(unit, header)) + 2);
+    await api(`${cfg.spreadsheetId}/values/${encodeURIComponent(`${cfg.sheetName}!${colLetter(idx)}1`)}?valueInputOption=RAW`, { method: "PUT", body: JSON.stringify({ values: [["Reminded"]] }) });
+  }
+  const range = `${cfg.sheetName}!${colLetter(idx)}${row}`;
+  await api(`${cfg.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`, { method: "PUT", body: JSON.stringify({ values: [[stamp()]] }) });
 }

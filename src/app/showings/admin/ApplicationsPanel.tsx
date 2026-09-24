@@ -8,12 +8,12 @@ import ApplicantModal, { ModalBooking } from "./ApplicantModal";
 export interface AdminApplication {
   row: number; submittedAt: string; name: string; email: string; phone: string; occupants: string; moveIn: string;
   attracted: string; whyMoving: string; consentComms: string; consentCredit: string; pets: string; references: string;
-  insurance: string; other: string; status: Status; statusUpdated: string; detectedIncome: number | null;
+  insurance: string; other: string; status: Status; statusUpdated: string; reminded: string; detectedIncome: number | null;
 }
 
 type Status = "New" | "Invited" | "Selected" | "Declined" | "Not selected";
 
-export interface InviteTarget { unit: string; name: string; email: string; phone: string; row: number }
+export interface InviteTarget { unit: string; name: string; email: string; phone: string; row: number; reminder?: boolean }
 
 const units = SHOWING_UNITS.filter(u => u.bookable && u.applicationSheet);
 const money = (n: number) => `$${Math.round(n).toLocaleString("en-CA")}`;
@@ -85,7 +85,17 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite, book
   if (!units.length) return null;
   const tabs: Tab[] = ["New", "Invited", "Selected", "Declined", "All"];
   const counts = Object.fromEntries(tabs.map(t => [t, (apps || []).filter(a => inTab(a.status, t)).length])) as Record<Tab, number>;
-  const shown = (apps || []).filter(a => inTab(a.status, filter));
+  // Their showing for this unit (upcoming first, else the most recent past one), matched by email
+  const showingFor = (a: AdminApplication) => {
+    const mine = bookings.filter(b => b.unit === unit?.code && b.email.toLowerCase() === a.email.toLowerCase());
+    return mine.find(b => DateTime.fromISO(b.startIso) > DateTime.now()) || mine[mine.length - 1];
+  };
+  const notBooked = (a: AdminApplication) => a.status === "Invited" && !showingFor(a);
+  // Not-booked people float to the top of the Invited tab
+  const shown = (apps || []).filter(a => inTab(a.status, filter))
+    .sort((x, y) => filter === "Invited" ? Number(notBooked(y)) - Number(notBooked(x)) : 0);
+  const invitedCount = (apps || []).filter(a => a.status === "Invited").length;
+  const notBookedCount = (apps || []).filter(notBooked).length;
   const openDecline = (a: AdminApplication, stage: "Declined" | "Not selected") =>
     setDecline({ app: a, stage, message: declineText(stage, unit?.label || "the unit", a.name, "647-225-4909"), send: true, cancelBooking: true });
 
@@ -116,11 +126,17 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite, book
         {error && <div className="alert alert-danger py-2 small">{error}</div>}
         {apps === null && !error && <p className="text-muted small">Loading...</p>}
         {apps && shown.length === 0 && <p className="text-muted small mb-0">Nothing here.</p>}
+        {apps && filter === "Invited" && invitedCount > 0 && (
+          <p className="small mb-2">{notBookedCount ? <><b>{notBookedCount} of {invitedCount}</b> haven&apos;t booked a showing yet.</> : "Everyone invited has booked a showing."}</p>
+        )}
 
         <div className="d-grid gap-2">
           {shown.map(a => {
             const ratio = a.detectedIncome && rent ? a.detectedIncome / (rent * 12) : null;
             const parking = /parking/i.test(a.other);
+            const showing = a.status !== "New" ? showingFor(a) : undefined;
+            const showingAt = showing && DateTime.fromISO(showing.startIso).setZone("America/Toronto");
+            const upcoming = showingAt && showingAt > DateTime.now();
             return (
               <div key={a.row} className="card">
                 <div className="card-body py-3">
@@ -129,6 +145,8 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite, book
                       <div className="d-flex align-items-center gap-2 flex-wrap">
                         <b>{a.name || "(no name)"}</b>
                         <span className={`badge ${badge[a.status]}`}>{a.status}</span>
+                        {showingAt && <span className={`badge ${upcoming ? "text-bg-success" : "text-bg-light border"}`}><i className={`bi ${upcoming ? "bi-calendar-check" : "bi-check2"} me-1`}></i>{upcoming ? `Booked ${showingAt.toFormat("ccc LLL d, h:mm a")}` : `Saw it ${showingAt.toFormat("LLL d")}`}</span>}
+                        {notBooked(a) && <span className="badge text-bg-warning">Not booked</span>}
                         {parking && <span className="badge text-bg-light border">Parking</span>}
                       </div>
                       <div className="small text-muted app-line">
@@ -136,7 +154,7 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite, book
                         {a.detectedIncome ? <> · income ~{money(a.detectedIncome)}{ratio ? <b className={ratio >= 3 ? "text-success" : ratio >= 2.5 ? "text-warning-emphasis" : "text-danger"}> ({ratio.toFixed(1)}x rent)</b> : null}</> : " · income not detected"}
                         {" · "}Pets: {a.pets || "?"}
                       </div>
-                      <div className="small text-muted">Applied {a.submittedAt}{a.statusUpdated ? ` · ${a.status} ${a.statusUpdated}` : ""}</div>
+                      <div className="small text-muted">Applied {a.submittedAt}{a.statusUpdated ? ` · ${a.status} ${a.statusUpdated}` : ""}{a.reminded && a.status === "Invited" ? ` · Reminded ${a.reminded}` : ""}</div>
                     </div>
                     <div className="app-actions">
                       <button className="btn btn-sm btn-outline-secondary" onClick={() => setOpen(a.row)}>Details</button>
@@ -148,6 +166,7 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite, book
                       )}
                       {a.status === "Invited" && (
                         <>
+                          {notBooked(a) && <button className="btn btn-sm btn-outline-primary" onClick={() => onInvite({ unit: unitSlug, name: a.name, email: a.email, phone: a.phone, row: a.row, reminder: true })}>{a.reminded ? "Remind again" : "Send reminder"}</button>}
                           <button className="btn btn-sm btn-success" onClick={() => { if (confirm(`Mark ${a.name} as selected for the lease? This only changes their status; no email is sent.`)) setStatus(a, "Selected"); }}>Offer the lease</button>
                           <button className="btn btn-sm btn-outline-danger" onClick={() => openDecline(a, "Not selected")}>Not moving forward</button>
                         </>
@@ -180,7 +199,7 @@ export default function ApplicationsPanel({ adminKey, refreshKey, onInvite, book
               <div className="modal-body">
                 <p className="small text-muted mb-2">This marks their application as {decline.stage === "Declined" ? "Declined" : "Not selected"} in the Sheet. You can Undo it later.</p>
                 {(() => {
-                  const booked = bookings.filter(b => b.unit === unit?.code && b.email.toLowerCase() === decline.app.email.toLowerCase());
+                  const booked = bookings.filter(b => b.unit === unit?.code && b.email.toLowerCase() === decline.app.email.toLowerCase() && DateTime.fromISO(b.startIso) > DateTime.now());
                   if (!booked.length) return <p className="small mb-2">They don&apos;t have a showing booked.</p>;
                   const when = booked.map(b => DateTime.fromISO(b.startIso).setZone("America/Toronto").toFormat("ccc LLL d, h:mm a")).join(", ");
                   return (

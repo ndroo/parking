@@ -5,7 +5,7 @@ import { inviteCode, inviteLink } from "@/lib/invites";
 import { getListing } from "@/lib/listingai";
 import { buildInviteEmail, send } from "@/lib/notify";
 import { renderEmail } from "@/lib/emailTemplate";
-import { setApplicationStatus } from "@/lib/applicationsSheet";
+import { setApplicationReminded, setApplicationStatus } from "@/lib/applicationsSheet";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,10 +13,10 @@ export const dynamic = "force-dynamic";
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json" } });
 
-// POST { unit, name, email, phone, message, send } -> { code, link, subject, html, sent }
+// POST { unit, name, email, phone, message, send, row?, reminder? } -> { code, link, subject, html, sent }
 export async function POST(req: NextRequest) {
   if (!isAdmin(req.headers.get("x-admin-key"))) return json({ error: "Unauthorized" }, 401);
-  const { unit: slug, name, email, phone, message, send: doSend, row } = await req.json();
+  const { unit: slug, name, email, phone, message, send: doSend, row, reminder } = await req.json();
   const unit = getUnit(slug);
   if (!unit) return json({ error: "Unknown unit" }, 400);
   const cleanEmail = String(email || "").trim().toLowerCase();
@@ -26,16 +26,16 @@ export async function POST(req: NextRequest) {
   const code = inviteCode(unit.slug, cleanEmail);
   const link = inviteLink(req.nextUrl.origin, inv);
   const listing = await getListing(unit.listingId);
-  const mail = buildInviteEmail({ unit, name: inv.name, email: cleanEmail, code, link, message: String(message || ""), photoUrl: listing?.photos[0]?.url });
+  const mail = buildInviteEmail({ unit, name: inv.name, email: cleanEmail, code, link, message: String(message || ""), photoUrl: listing?.photos[0]?.url, reminder: !!reminder });
   const { html } = renderEmail(mail.content);
 
   let sent = false;
   if (doSend) {
     sent = await send(mail);
     if (!sent) return json({ error: "The email didn't send. Check GMAIL_APP_PASSWORD, or copy the link and send it yourself.", code, link }, 502);
-    // Invited from an application: mark it Invited in the Sheet
+    // Invited from an application: mark it Invited (or note the reminder) in the Sheet
     if (row && unit.applicationSheet) {
-      try { await setApplicationStatus(unit, Number(row), cleanEmail, "Invited"); }
+      try { await (reminder ? setApplicationReminded(unit, Number(row), cleanEmail) : setApplicationStatus(unit, Number(row), cleanEmail, "Invited")); }
       catch (e: any) { return json({ code, link, subject: mail.subject, html, sent, warning: `Invite sent, but the Sheet wasn't updated: ${e.message}` }); }
     }
   }

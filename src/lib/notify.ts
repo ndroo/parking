@@ -162,13 +162,14 @@ export async function notifyShowing(kind: ShowingEvent, b: ShowingInfo, previous
 }
 
 // Approval email with a personal booking link, sent from the admin page
-export function buildInviteEmail(p: { unit: ShowingUnit; name: string; email: string; code: string; link: string; message: string; photoUrl?: string }): OutgoingEmail {
+// (reminder: same email, nudging someone who hasn't booked yet)
+export function buildInviteEmail(p: { unit: ShowingUnit; name: string; email: string; code: string; link: string; message: string; photoUrl?: string; reminder?: boolean }): OutgoingEmail {
   return {
     to: p.email,
     fromName: "Andrew McGrath",
-    subject: `Invitation to book your showing: ${p.unit.label}, 180 Beatrice`,
+    subject: p.reminder ? `Reminder: book your showing for ${p.unit.label}, 180 Beatrice` : `Invitation to book your showing: ${p.unit.label}, 180 Beatrice`,
     content: {
-      preheader: `You're invited to book a showing at ${p.unit.label}, 180 Beatrice.`,
+      preheader: p.reminder ? `There's still time to book a showing at ${p.unit.label}, 180 Beatrice.` : `You're invited to book a showing at ${p.unit.label}, 180 Beatrice.`,
       paragraphs: p.message.split(/\n\s*\n/).map(t => t.trim()).filter(Boolean),
       buttons: [{ label: "Pick a showing time", href: p.link, primary: true }],
       rawLink: p.link,

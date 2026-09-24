@@ -1,18 +1,29 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { SHOWING_UNITS } from "@/lib/showingUnits";
-import { defaultMessage } from "./InvitePanel";
+import { SHOWING_CONTACT, SHOWING_UNITS, ShowingUnit } from "@/lib/showingUnits";
+import { defaultMessage, windowsText } from "./InvitePanel";
 import type { AdminWindow } from "./WindowsPanel";
 import type { InviteTarget } from "./ApplicationsPanel";
 import PreviewFrame from "./PreviewFrame";
 
-// "Invite to showing" from an application: edit the message, see the email, send
-export default function InviteModal({ adminKey, target, windows, onClose, onSent }: {
-  adminKey: string; target: InviteTarget; windows: AdminWindow[]; onClose: () => void; onSent: () => void;
+export function reminderMessage(unit: ShowingUnit, name: string, windows: AdminWindow[]) {
+  const first = name.trim().split(/\s+/)[0] || "there";
+  return [
+    `Hi ${first},`,
+    `Just a quick reminder that you're invited to see ${unit.label} at 180 Beatrice, in case my last email got buried. We're doing showings on ${windowsText(unit, windows)}, and there are still times open. Use the button below to pick whatever time suits you.`,
+    `If the timing doesn't work or you've found another place, no worries at all, just reply here and let me know.`,
+    `Thanks,\n${SHOWING_CONTACT.name}\n${SHOWING_CONTACT.phone}`,
+  ].join("\n\n");
+}
+
+// "Invite to showing" from an application: edit the message, see the email, send.
+// With reminder, it resends the same booking link to someone who hasn't booked.
+export default function InviteModal({ adminKey, target, windows, reminder = false, onClose, onSent }: {
+  adminKey: string; target: InviteTarget; windows: AdminWindow[]; reminder?: boolean; onClose: () => void; onSent: () => void;
 }) {
   const unit = SHOWING_UNITS.find(u => u.slug === target.unit)!;
   const [email, setEmail] = useState(target.email);
-  const [message, setMessage] = useState(() => defaultMessage(unit, target.name, windows));
+  const [message, setMessage] = useState(() => (reminder ? reminderMessage : defaultMessage)(unit, target.name, windows));
   const [preview, setPreview] = useState<{ html: string; subject: string; code: string } | null>(null);
   const [stale, setStale] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -27,7 +38,7 @@ export default function InviteModal({ adminKey, target, windows, onClose, onSent
       const res = await fetch("/api/showings/admin/invite", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
-        body: JSON.stringify({ unit: target.unit, name: target.name, email, phone: target.phone, message, send, row: send ? target.row : undefined }),
+        body: JSON.stringify({ unit: target.unit, name: target.name, email, phone: target.phone, message, send, row: send ? target.row : undefined, reminder }),
       });
       const data = await res.json();
       if (!send && id !== seq.current) return; // a newer preview is on its way
@@ -57,7 +68,7 @@ export default function InviteModal({ adminKey, target, windows, onClose, onSent
       <div className="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-md-down" onClick={e => e.stopPropagation()}>
         <div className="modal-content">
           <div className="modal-header">
-            <h5 className="modal-title">Invite {target.name} to a showing</h5>
+            <h5 className="modal-title">{reminder ? `Remind ${target.name} to book a showing` : `Invite ${target.name} to a showing`}</h5>
             <button className="btn-close" onClick={onClose} disabled={busy}></button>
           </div>
           <div className="modal-body">
@@ -86,7 +97,7 @@ export default function InviteModal({ adminKey, target, windows, onClose, onSent
           </div>
           <div className="modal-footer">
             <button className="btn btn-secondary" onClick={onClose} disabled={busy}>Not now</button>
-            <button className="btn btn-success" onClick={() => call(true)} disabled={busy || !email}>{busy ? "Working..." : "Send invite"}</button>
+            <button className="btn btn-success" onClick={() => call(true)} disabled={busy || !email}>{busy ? "Working..." : reminder ? "Send reminder" : "Send invite"}</button>
           </div>
         </div>
       </div>
