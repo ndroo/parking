@@ -26,7 +26,7 @@ All times are in America/Toronto.
 
 ### Pricing
 
-- $15 per 24 hours, $50 per week, $100 per month. UI shows the cheapest combination.
+- $15 per 24 hours, $50 per week, $125 per month. UI shows the cheapest combination.
 
 ### Notes
 

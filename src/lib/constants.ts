@@ -7,5 +7,5 @@ export const SITE_CONFIG = {
 export const PRICING = {
   daily: { cents: 1500, label: "$15", period: "24h" },
   weekly: { cents: 5000, label: "$50", period: "week" },
-  monthly: { cents: 10000, label: "$100", period: "month" }
+  monthly: { cents: 12500, label: "$125", period: "month" }
 } as const;

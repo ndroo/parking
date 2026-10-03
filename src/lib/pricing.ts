@@ -3,7 +3,7 @@ import { PriceBreakdown } from "@/lib/types";
 
 const DAY_CENTS = 1500; // $15
 const WEEK_CENTS = 5000; // $50
-const MONTH_CENTS = 10000; // $100
+const MONTH_CENTS = 12500; // $125
 
 export function calculateBestPrice(startIso: string, endIso: string): PriceBreakdown {
   const start = DateTime.fromISO(startIso, { zone: "America/Toronto" });
