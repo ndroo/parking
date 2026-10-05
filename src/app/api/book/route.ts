@@ -22,11 +22,15 @@ export async function POST(req: NextRequest) {
     // Date constraints with smart "now" handling
     const now = DateTime.now().setZone(APP_TZ);
     let start = DateTime.fromISO(startIso, { zone: APP_TZ });
-    const end = DateTime.fromISO(endIso, { zone: APP_TZ });
-    
-    // Smart bump: if start is in the past or very recent (within 5 minutes), bump to now
+    let end = DateTime.fromISO(endIso, { zone: APP_TZ });
+
+    // A "start now" booking is usually submitted a few minutes after the page loaded, so the
+    // start is slightly in the past. Move it to now and push the end by the same amount, so
+    // the person gets the full duration they chose.
     if (start <= now.plus({ minutes: 5 })) {
-      start = now.plus({ minutes: 1 }); // Bump to 1 minute from now
+      const bumped = now.plus({ minutes: 1 });
+      end = end.plus(bumped.diff(start));
+      start = bumped;
     }
     if (start.diff(now, 'days').days > MAX_ADVANCE_DAYS) {
       return new Response(JSON.stringify({ error: `Start must be within ${MAX_ADVANCE_DAYS} days` }), { status: 400 });
@@ -70,7 +74,7 @@ export async function POST(req: NextRequest) {
       return new Response(JSON.stringify({ error: err?.message || "Failed to create event" }), { status: 502 });
     }
     const price = calculateBestPrice(finalStartIso, finalEndIso);
-    await notifyParkingBooked({ spot, ref, name, email, phone, plate, startIso: finalStartIso, endIso: finalEndIso, price: formatPrice(price.totalCents), manageUrl: `${req.nextUrl.origin}/manage` });
+    await notifyParkingBooked({ spot, ref, name, email, phone, plate, startIso: finalStartIso, endIso: finalEndIso, price: formatPrice(price.totalCents), manageUrl: `${req.nextUrl.origin}/parking/manage` });
     return new Response(JSON.stringify({ ref, eventId: id, priceCents: price.totalCents }), { status: 200, headers: { "Content-Type": "application/json" } });
   } catch (e: any) {
     return new Response(JSON.stringify({ error: e.message || "unexpected" }), { status: 500 });

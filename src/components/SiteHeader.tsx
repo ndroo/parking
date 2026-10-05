@@ -6,11 +6,11 @@ import s from "./SiteHeader.module.css";
 // One header for the whole site (parking + showings), rendered from the root layout
 export default function SiteHeader() {
   const path = usePathname() || "/";
-  const onShowings = (path.startsWith("/showings") && !path.startsWith("/showings/admin")) || path.startsWith("/guide");
-  const active = path.startsWith("/showings") ? "showings" : path.startsWith("/guide") ? "guide" : "parking";
+  const darkOk = (path.startsWith("/showings") && !path.startsWith("/showings/admin")) || path.startsWith("/guide") || path.startsWith("/parking") || path === "/" || path.startsWith("/terms");
+  const active = path.startsWith("/showings") ? "showings" : path.startsWith("/guide") ? "guide" : path.startsWith("/parking") ? "parking" : "";
 
   return (
-    <header className={`${s.bar} ${onShowings ? s.darkOk : ""}`}>
+    <header className={`${s.bar} ${darkOk ? s.darkOk : ""}`}>
       <div className={s.narrow}>
         <div className={s.inner}>
           <Link href="/" className={s.brand}>
@@ -18,7 +18,7 @@ export default function SiteHeader() {
             180 Beatrice
           </Link>
           <nav className={s.nav}>
-            <Link href="/" className={`${s.link} ${active === "parking" ? s.active : ""}`}>
+            <Link href="/parking" className={`${s.link} ${active === "parking" ? s.active : ""}`}>
               <i className="bi bi-p-square"></i> Parking
             </Link>
             <Link href="/showings" className={`${s.link} ${active === "showings" ? s.active : ""}`}>

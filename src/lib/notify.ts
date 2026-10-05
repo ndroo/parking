@@ -285,7 +285,7 @@ export function buildParkingEmails(p: ParkingInfo): OutgoingEmail[] {
         preheader: `${spot} spot from ${short(p.startIso)}. Reference ${p.ref}.`,
         badge: { text: "Parking confirmed", tone: "ok" },
         title: `You're all set, ${p.name.split(/\s+/)[0]}.`,
-        intro: `Your parking spot is reserved. Please send payment by e-transfer to ${BOOKING_OWNER_EMAIL}.`,
+        intro: `The ${spot} spot is yours for the dates below. Please pay before you leave the spot: e-transfer ${p.price} to ${BOOKING_OWNER_EMAIL} with your code ${p.ref} in the message.`,
         when,
         refCode: p.ref,
         rows: [

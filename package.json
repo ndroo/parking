@@ -9,11 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@fullcalendar/daygrid": "^6.1.19",
-    "@fullcalendar/interaction": "^6.1.19",
-    "@fullcalendar/react": "^6.1.19",
-    "@fullcalendar/resource-timegrid": "^6.1.19",
-    "@fullcalendar/timegrid": "^6.1.19",
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
     "google-auth-library": "^10.3.0",

@@ -128,3 +128,28 @@ export async function deleteEvent(spot: Spot, eventId: string): Promise<void> {
 }
 
 
+
+export interface BookingDetails { spot: Spot; id: string; start: string; end: string; plate: string }
+
+// Looks the code up in both calendars so people only need their code, not the spot.
+export async function findBookingByRef(ref: string): Promise<BookingDetails | null> {
+  const accessToken = await getAccessToken();
+  const timeMin = DateTime.now().minus({ years: 1 }).toISO()!;
+  const timeMax = DateTime.now().plus({ years: 1 }).toISO()!;
+  for (const spot of ["northern", "southern"] as Spot[]) {
+    const url = new URL(`${BASE_URL}/calendars/${encodeURIComponent(getCalendarId(spot))}/events`);
+    url.searchParams.set("q", ref);
+    url.searchParams.set("timeMin", timeMin);
+    url.searchParams.set("timeMax", timeMax);
+    url.searchParams.set("singleEvents", "true");
+    const res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!res.ok) throw new Error(`findBookingByRef failed: ${res.status} ${await res.text()}`);
+    const json = await res.json();
+    const item = (json.items || []).find((e: any) => e.extendedProperties?.private?.ref === ref || e.summary?.includes(ref));
+    if (item) {
+      const plate = item.extendedProperties?.private?.plate || (item.summary?.match(/\]\s*([^(]+)\s*\(/)?.[1] || "").trim();
+      return { spot, id: item.id, start: item.start?.dateTime || item.start?.date, end: item.end?.dateTime || item.end?.date, plate };
+    }
+  }
+  return null;
+}

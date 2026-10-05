@@ -1,100 +1,47 @@
-"use client";
+import Link from "next/link";
+import s from "../parking/parking.module.css";
 import { SITE_CONFIG } from "@/lib/constants";
+import { BOOKING_OWNER_EMAIL } from "@/lib/config";
+
+export const metadata = { title: "Parking terms - 180 Beatrice" };
 
 export default function TermsOfService() {
   return (
-    <div className="container mt-5">
-      <div className="row justify-content-center">
-        <div className="col-lg-8">
-          <div className="card">
-            <div className="card-header">
-              <h1 className="h3 mb-0">Terms of Service</h1>
-              <small className="text-muted">{SITE_CONFIG.address} - Parking Agreement</small>
-            </div>
-            <div className="card-body">
-              <div className="mb-4">
-                <h4>1. Parking at Your Own Risk</h4>
-                <p>
-                  By using this parking space, you acknowledge and agree that you park your vehicle entirely at your own risk. 
-                  The property owner, landlord, and any affiliated parties are not responsible for any damage, theft, vandalism, 
-                  or loss that may occur to your vehicle or its contents while parked on the premises.
-                </p>
-              </div>
+    <div className={s.page}>
+      <div className={s.wrap}>
+      <article className={s.article}>
+        <h1>Parking terms</h1>
+        <p className={s.sub}>{SITE_CONFIG.address}</p>
 
-              <div className="mb-4">
-                <h4>2. No Liability for Damage</h4>
-                <p>
-                  The property owner shall not be liable for any damage to your vehicle caused by, but not limited to:
-                </p>
-                <ul>
-                  <li>Weather conditions (hail, snow, ice, wind, etc.)</li>
-                  <li>Falling objects (tree branches, debris, etc.)</li>
-                  <li>Acts of vandalism or theft by third parties</li>
-                  <li>Other vehicles or pedestrians</li>
-                  <li>Normal wear and tear</li>
-                  <li>Any other causes beyond the property owner's control</li>
-                </ul>
-              </div>
+        <h2>1. Parking at your own risk</h2>
+        <p>By using this parking space you agree that you park your vehicle entirely at your own risk. The property owner, landlord and any affiliated parties are not responsible for any damage, theft, vandalism or loss to your vehicle or its contents while parked on the premises.</p>
 
-              <div className="mb-4">
-                <h4>3. Vehicle Security</h4>
-                <p>
-                  You are solely responsible for securing your vehicle and any belongings left inside. 
-                  We strongly recommend locking your vehicle and not leaving valuable items visible.
-                </p>
-              </div>
+        <h2>2. No liability for damage</h2>
+        <p>The property owner is not liable for damage to your vehicle caused by, among other things:</p>
+        <ul><li>Weather (hail, snow, ice, wind)</li><li>Falling objects (tree branches, debris)</li><li>Vandalism or theft by third parties</li><li>Other vehicles or pedestrians</li><li>Normal wear and tear</li><li>Any other cause beyond the property owner&apos;s control</li></ul>
 
-              <div className="mb-4">
-                <h4>4. Compliance with Rules</h4>
-                <p>
-                  By booking a parking space, you agree to:
-                </p>
-                <ul>
-                  <li>Park only in your designated spot (Northern or Southern)</li>
-                  <li>Park only during your reserved time period</li>
-                  <li>Not block access to other parking spaces or building entrances</li>
-                  <li>Comply with all local traffic and parking regulations</li>
-                  <li>Display the correct license plate number as registered</li>
-                </ul>
-              </div>
+        <h2>3. Vehicle security</h2>
+        <p>You are solely responsible for securing your vehicle and anything left inside it. Lock your vehicle and don&apos;t leave valuables visible.</p>
 
-              <div className="mb-4">
-                <h4>5. Payment and Cancellation</h4>
-                <p>
-                  Payment must be made via e-transfer to andrewjohnmcgrath@gmail.com within 24 hours of booking. 
-                  Failure to pay may result in cancellation of your reservation. Refunds are at the discretion of the property owner.
-                </p>
-              </div>
+        <h2>4. Rules</h2>
+        <p>By booking a space you agree to:</p>
+        <ul><li>Park only in the spot you booked (Northern or Southern)</li><li>Park only during your booked time</li><li>Not block other parking spaces, the laneway or building entrances</li><li>Comply with local traffic and parking regulations</li><li>Display the licence plate you registered</li></ul>
 
-              <div className="mb-4">
-                <h4>6. Indemnification</h4>
-                <p>
-                  You agree to indemnify and hold harmless the property owner from any claims, damages, losses, or expenses 
-                  arising from your use of the parking space, including but not limited to damage you may cause to other vehicles 
-                  or property.
-                </p>
-              </div>
+        <h2>5. Payment and cancellation</h2>
+        <p>Pay by e-transfer to {BOOKING_OWNER_EMAIL} before you leave the spot, with your booking code in the message. Unpaid bookings may be cancelled. Refunds are at the discretion of the property owner.</p>
 
-              <div className="mb-4">
-                <h4>7. Modification of Terms</h4>
-                <p>
-                  These terms may be updated at any time without prior notice. Continued use of the parking service 
-                  constitutes acceptance of any modified terms.
-                </p>
-              </div>
+        <h2>6. Unauthorized vehicles</h2>
+        <p>Vehicles parked without a valid booking, or outside their booked time, are parked without the consent of the property owner and may be tagged and towed at the vehicle owner&apos;s expense under City of Toronto Municipal Code Chapter 915.</p>
 
-              <div className="alert alert-warning">
-                <strong>Important:</strong> By checking the "I agree to the Terms of Service" box during booking, 
-                you acknowledge that you have read, understood, and agree to be bound by these terms.
-              </div>
-            </div>
-            <div className="card-footer text-center">
-              <button className="btn btn-secondary" onClick={() => window.close()}>
-                Close Window
-              </button>
-            </div>
-          </div>
-        </div>
+        <h2>7. Indemnification</h2>
+        <p>You agree to indemnify and hold harmless the property owner from any claims, damages, losses or expenses arising from your use of the parking space, including damage you cause to other vehicles or property.</p>
+
+        <h2>8. Changes to these terms</h2>
+        <p>These terms may be updated at any time. Continued use of the parking service constitutes acceptance of the current terms.</p>
+
+        <div className={`${s.note} ${s.noteInfo}`} style={{ marginTop: 10 }}>By booking a spot you confirm that you have read and agree to these terms.</div>
+        <p className={s.fine} style={{ textAlign: "left" }}><Link href="/parking">Back to parking</Link></p>
+      </article>
       </div>
     </div>
   );
