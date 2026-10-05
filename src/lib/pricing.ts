@@ -8,12 +8,13 @@ const MONTH_CENTS = 12500; // $125
 export function calculateBestPrice(startIso: string, endIso: string): PriceBreakdown {
   const start = DateTime.fromISO(startIso, { zone: "America/Toronto" });
   const end = DateTime.fromISO(endIso, { zone: "America/Toronto" });
-  const totalHours = end.diff(start, "hours").hours;
-  if (totalHours <= 0) {
+  if (end <= start) {
     return { months: 0, weeks: 0, days: 0, totalCents: 0 };
   }
 
-  const totalDays = Math.ceil(totalHours / 24);
+  // Whole calendar days in Toronto time, rounded up. (Hours / 24 over-counts by a day
+  // whenever the range crosses a daylight-saving change in the autumn.)
+  const totalDays = Math.max(1, Math.ceil(end.diff(start, "days").days - 1e-6));
 
   // Greedy on months -> weeks -> days is optimal given flat rates
   const months = Math.floor(totalDays / 30);
