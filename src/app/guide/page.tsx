@@ -13,13 +13,13 @@ export const metadata: Metadata = {
 };
 
 const SECTIONS = [
+  { id: "about", label: "About us" },
   { id: "process", label: "Our process" },
   { id: "selected", label: "Getting selected" },
   { id: "documents", label: "What to share" },
   { id: "utilities", label: "Utilities & bills" },
   { id: "ideal", label: "Our ideal tenant" },
   { id: "faq", label: "FAQ" },
-  { id: "about", label: "About us" },
   { id: "history", label: "History" },
   { id: "reno-2018", label: "2018-19 renovation" },
   { id: "reno-2022", label: "2022-23 basement" },
@@ -67,6 +67,15 @@ export default async function GuidePage() {
         <nav className={g.toc} aria-label="Guide sections">
           {SECTIONS.map(x => <a key={x.id} href={`#${x.id}`}>{x.label}</a>)}
         </nav>
+
+        <section id="about" className={`${s.section} ${g.block}`}>
+          <span className={g.kicker}>Your landlords</span>
+          <h2 className={g.h2}>About us</h2>
+          <div className={g.about}>
+            <ZoomImage photo={GUIDE.about.photo} />
+            <div>{GUIDE.about.paragraphs.map(t => <p key={t} className={g.p}>{t}</p>)}</div>
+          </div>
+        </section>
 
         <section id="process" className={`${s.section} ${g.block}`}>
           <span className={g.kicker}>How it works</span>
@@ -163,15 +172,6 @@ export default async function GuidePage() {
                 <p>{f.a}</p>
               </details>
             ))}
-          </div>
-        </section>
-
-        <section id="about" className={`${s.section} ${g.block}`}>
-          <span className={g.kicker}>Your landlords</span>
-          <h2 className={g.h2}>About us</h2>
-          <div className={g.about}>
-            <ZoomImage photo={GUIDE.about.photo} />
-            <div>{GUIDE.about.paragraphs.map(t => <p key={t} className={g.p}>{t}</p>)}</div>
           </div>
         </section>
 
