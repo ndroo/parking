@@ -98,6 +98,31 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
         </Link>
 
         </div>
+
+        <h2 className={s.homeSection}>For tenants</h2>
+        <div className={s.rows}>
+        <a href="https://cameras.andrewmcgrath.info" className={s.row}>
+          <div className={s.rowThumb}><div className={s.diagram}><svg viewBox="0 0 120 80" aria-hidden="true"><rect x="10" y="22" width="62" height="40" rx="6" fill="none" stroke="currentColor" strokeWidth="4"/><path d="M72 36l34-14v36L72 44z" fill="currentColor"/><circle cx="41" cy="42" r="9" fill="none" stroke="currentColor" strokeWidth="4"/></svg></div></div>
+          <div className={s.rowBody}>
+            <div style={{ minWidth: 0 }}>
+              <div className={s.rowTitle}>Security cameras</div>
+              <span className={s.rowSub}>Live view of the shared outdoor cameras and the doorbell. Sign in with the mobile number on your lease; you get a text code, no password.</span>
+            </div>
+            <span className={s.rowArrow}>›</span>
+          </div>
+        </a>
+
+        <a href="https://ndroo.github.io/tapo-boiler-monitor/" className={s.row}>
+          <div className={s.rowThumb}><div className={s.diagram}><svg viewBox="0 0 120 80" aria-hidden="true"><path d="M30 64V28a6 6 0 0 1 6-6h0a6 6 0 0 1 6 6v36" fill="none" stroke="currentColor" strokeWidth="4"/><circle cx="36" cy="64" r="9" fill="currentColor"/><path d="M60 24h40M60 36h40M60 48h40M60 60h40" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/></svg></div></div>
+          <div className={s.rowBody}>
+            <div style={{ minWidth: 0 }}>
+              <div className={s.rowTitle}>Heating system</div>
+              <span className={s.rowSub}>The boiler and each unit&apos;s thermostat, checked every 15 minutes. If the heat ever feels off, look here first.</span>
+            </div>
+            <span className={s.rowArrow}>›</span>
+          </div>
+        </a>
+        </div>
         <p className={s.homeFoot}>180 Beatrice St, Toronto · <Link href="/terms">Parking terms</Link></p>
       </div>
     </div>

@@ -143,6 +143,7 @@
 .status { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; margin-top: 4px; }
 .dotOk, .dotNo { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 .dotOk { background: var(--ok); } .dotNo { background: var(--bad); }
+.homeSection { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 26px 0 10px 4px; }
 .homeFoot { text-align: center; font-size: 13px; color: var(--muted); padding: 6px 0 0; }
 @media (max-width: 420px) { .rowThumb { flex-basis: 108px; } .rowTitle { font-size: 17px; } }
 /* desktop: three cards side by side, preview on top */
