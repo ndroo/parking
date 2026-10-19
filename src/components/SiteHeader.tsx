@@ -6,8 +6,8 @@ import s from "./SiteHeader.module.css";
 // One header for the whole site (parking + showings), rendered from the root layout
 export default function SiteHeader() {
   const path = usePathname() || "/";
-  const darkOk = (path.startsWith("/showings") && !path.startsWith("/showings/admin")) || path.startsWith("/guide") || path.startsWith("/parking") || path === "/" || path.startsWith("/terms");
-  const active = path.startsWith("/showings") ? "showings" : path.startsWith("/guide") ? "guide" : path.startsWith("/parking") ? "parking" : "";
+  const darkOk = (path.startsWith("/showings") && !path.startsWith("/showings/admin")) || path.startsWith("/guide") || path.startsWith("/parking") || path.startsWith("/heating") || path === "/" || path.startsWith("/terms");
+  const active = path.startsWith("/showings") ? "showings" : path.startsWith("/guide") ? "guide" : path.startsWith("/parking") ? "parking" : path.startsWith("/heating") ? "heating" : "";
 
   return (
     <header className={`${s.bar} ${darkOk ? s.darkOk : ""}`}>
@@ -26,6 +26,9 @@ export default function SiteHeader() {
             </Link>
             <Link href="/guide" className={`${s.link} ${active === "guide" ? s.active : ""}`}>
               <i className="bi bi-book"></i> Guide
+            </Link>
+            <Link href="/heating" className={`${s.link} ${active === "heating" ? s.active : ""}`}>
+              <i className="bi bi-thermometer-half"></i> Heating
             </Link>
           </nav>
         </div>

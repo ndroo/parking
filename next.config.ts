@@ -5,7 +5,6 @@ const nextConfig: NextConfig = {
   // The heating dashboard is served by the camera server; keep it on this domain for tenants.
   async rewrites() {
     return [
-      { source: "/heating", destination: "https://cameras.andrewmcgrath.info/heating" },
       { source: "/heating/:path*", destination: "https://cameras.andrewmcgrath.info/heating/:path*" },
     ];
   },
