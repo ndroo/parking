@@ -52,3 +52,7 @@ All times are in America/Toronto.
 ### Deploying
 
 The Vercel project is connected to this repo: pushing to `main` deploys to production automatically. `vercel --prod` from a linked checkout also works. Production env vars are managed in Vercel (Project → Settings → Environment Variables).
+
+## Hosting (since 2026-10-19)
+
+Runs on Fly.io as app `beatrice-180` (always on). Deploy with `fly deploy --remote-only` from this folder; the Dockerfile builds the Next.js standalone output. Secrets live in Fly (`fly secrets list -a beatrice-180`). `/heating` is a page in this app that reads its data from the camera server (`cameras.andrewmcgrath.info/heating/stills/...`, proxied by a rewrite in `next.config.ts`).
