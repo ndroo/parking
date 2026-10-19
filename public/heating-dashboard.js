@@ -188,7 +188,7 @@ function renderTimeline(rows, erows=[], wrows=[]){
   const bTop=PT, bLanesTop=bTop+TH+LPAD;                   // boiler chart, then its lanes right underneath
   const zTop=bLanesTop+blH+GAP, zLanesTop=zTop+(ETH?ETH+LPAD:0);   // indoor chart, then the zone lanes
   const H = zLanesTop + zlH + AX;
-  const css=getComputedStyle(document.documentElement);
+  const css=getComputedStyle(document.querySelector(".heatingDash")||document.documentElement);
   const line=css.getPropertyValue("--line").trim(), muted=css.getPropertyValue("--muted").trim(), fg=css.getPropertyValue("--fg").trim();
   const ndC=css.getPropertyValue("--nodata").trim();
 

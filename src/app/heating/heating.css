@@ -85,3 +85,17 @@
 .heatingDash .dot.fire { background:#ff7a1a; }
 .heatingDash .dot.dhw { background:var(--dhw); }
 .heatingDash .dot.unk { background:var(--unk); border:1px dashed var(--muted); }
+/* Bootstrap is global on this site and owns .row/.card; take them back inside the dashboard */
+.heatingDash .card { display: block; background: var(--surface); color: var(--ink); border: 1px solid var(--line); --bs-card-bg: var(--surface); --bs-card-color: var(--ink); }
+.heatingDash .card > * { color: inherit; }
+.heatingDash .row { display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 12px; margin: 0; padding: 6px 0; --bs-gutter-x: 0; --bs-gutter-y: 0; border-bottom: 1px dashed var(--line); }
+.heatingDash .row > * { width: auto; max-width: none; flex: 0 1 auto; padding: 0; }
+.heatingDash .row .k { color: var(--muted); }
+.heatingDash .row .v { text-align: right; }
+.heatingDash .rows .row:last-child { border-bottom: 0; }
+.heatingDash h1, .heatingDash h2, .heatingDash h3, .heatingDash h4 { color: var(--ink); }
+.heatingDash .tile, .heatingDash .stat, .heatingDash .cam { color: var(--ink); }
+.heatingDash table { color: var(--ink); }
+.heatingDash .cam { padding: 0; overflow: hidden; }
+.heatingDash .cam h2 { padding: 12px 14px 0; }
+.heatingDash .cam .rows { padding: 6px 14px 10px; }
