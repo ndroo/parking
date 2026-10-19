@@ -112,7 +112,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ s
           </div>
         </a>
 
-        <a href="/heating/" className={s.row}>
+        <a href="/heating" className={s.row}>
           <div className={s.rowThumb}><div className={s.diagram}><svg viewBox="0 0 120 80" aria-hidden="true"><path d="M30 64V28a6 6 0 0 1 6-6h0a6 6 0 0 1 6 6v36" fill="none" stroke="currentColor" strokeWidth="4"/><circle cx="36" cy="64" r="9" fill="currentColor"/><path d="M60 24h40M60 36h40M60 48h40M60 60h40" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/></svg></div></div>
           <div className={s.rowBody}>
             <div style={{ minWidth: 0 }}>
