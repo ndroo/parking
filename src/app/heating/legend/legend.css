@@ -1,0 +1,39 @@
+/* Heating legend, styled with the site's tokens */
+.heatingLegend { --card: var(--surface); --fg: var(--ink); --red: var(--bad); --blue: #0a84ff; --amber: var(--warn); --green: var(--ok); color: var(--ink); font-size: 15px; line-height: 1.55; margin-top: 18px; }
+.heatingLegend .card { display: block; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow); --bs-card-bg: var(--surface); --bs-card-color: var(--ink); }
+.heatingLegend .card > * { color: inherit; }
+.heatingLegend h1, .heatingLegend h2 { color: var(--ink); }
+.heatingLegend h3 { color: var(--muted); }
+.heatingLegend a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.heatingLegend table { color: var(--ink); }
+.heatingLegend code { color: var(--ink); background: var(--surface2); padding: 1px 5px; border-radius: 5px; font-family: var(--mono); font-size: 12.5px; }
+
+@media (prefers-color-scheme: light) {
+
+}
+.heatingLegend .legend { max-width:1040px; margin:0 auto; }
+.heatingLegend h1 { font-size:20px; margin:4px 0 2px; }
+.heatingLegend h2 { font-size:17px; margin:0 0 10px; }
+.heatingLegend h3 { font-size:14px; margin:14px 0 6px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+.heatingLegend a { color:var(--accent); }
+.heatingLegend .sub { color:var(--muted); font-size:13px; }
+.heatingLegend .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; margin:16px 0; }
+.heatingLegend .card img { width:100%; height:auto; display:block; border-radius:8px; border:1px solid var(--line); background:#fff; }
+.heatingLegend figcaption { color:var(--muted); font-size:13px; margin-top:8px; }
+.heatingLegend figure { margin:0 0 14px; }
+.heatingLegend p { max-width:72ch; margin:8px 0; }
+.heatingLegend .two { display:grid; gap:14px; grid-template-columns:1fr; }
+@media (min-width:760px){
+.heatingLegend .two { grid-template-columns:1fr 1fr; }
+}
+.heatingLegend table { width:100%; border-collapse:collapse; font-size:13.5px; }
+.heatingLegend th, .heatingLegend td { text-align:left; padding:7px 9px; border-bottom:1px solid var(--line); vertical-align:top; }
+.heatingLegend th { color:var(--muted); font-weight:600; }
+.heatingLegend .legendx { overflow-x:auto; }
+.heatingLegend .sw { display:inline-block; width:12px; height:12px; border:3px solid; border-radius:2px; vertical-align:-1px; margin-right:6px; }
+.heatingLegend .on { color:var(--amber); font-weight:600; }
+.heatingLegend .dhw { color:var(--blue); font-weight:600; }
+.heatingLegend .ok { color:var(--green); font-weight:600; }
+.heatingLegend code { font-family:ui-monospace,Menlo,monospace; font-size:12.5px; background:rgba(127,127,127,.12); padding:1px 5px; border-radius:4px; }
+.heatingLegend ul { padding-left:20px; }
+.heatingLegend li { margin:4px 0; }

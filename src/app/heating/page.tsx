@@ -13,7 +13,7 @@ export default function Heating() {
           <p>The boiler, the zone controller and each unit&apos;s thermostat, checked every 15 minutes by a camera on the boiler room wall. If the heat ever feels off, look here first: the banner at the top says whether anything needs attention.</p>
         </div>
         <Dashboard />
-        <p className={s.fine}>Screens are read from pixels with a model as a check, and the page refreshes itself every 5 minutes. <a href="/heating/legend.html">How to read the screens</a></p>
+        <p className={s.fine}>Screens are read from pixels with a model as a check, and the page refreshes itself every 5 minutes. <a href="/heating/legend">How to read the screens</a></p>
       </div>
     </div>
   );
